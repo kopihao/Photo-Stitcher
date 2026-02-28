@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<body>
+<canvas id="c" width="192" height="192"></canvas>
+<canvas id="c2" width="512" height="512"></canvas>
+<script>
+function draw(canvas, size) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#007bff';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#fff';
+  const w = size * 0.5, h = size * 0.0625, x = size * 0.25, gap = size * 0.125;
+  for(let i = 0; i < 4; i++) {
+    ctx.fillRect(x, x + i * gap, w, h);
+  }
+}
+draw(document.getElementById('c'), 192);
+draw(document.getElementById('c2'), 512);
+document.getElementById('c').toBlob(b => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'icon-192.png';
+  a.click();
+});
+setTimeout(() => {
+  document.getElementById('c2').toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'icon-512.png';
+    a.click();
+  });
+}, 500);
+</script>
+</body>
+</html>

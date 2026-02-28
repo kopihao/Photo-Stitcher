@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Photo Stitcher</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f5f5;
+  padding: 10px;
+  touch-action: manipulation;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex: 1; display: flex; flex-direction: column; }
+h1 { font-size: 24px; margin-bottom: 20px; text-align: center; color: #333; }
+h1 sup { font-size: 12px; color: #999; font-weight: normal; margin-left: 4px; }
+.controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+.btn { 
+  padding: 12px 24px; 
+  border: none; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  touch-action: manipulation;
+}
+.btn:active { transform: scale(0.95); }
+.btn-primary { background: #007bff; color: white; box-shadow: 0 2px 5px rgba(0,123,255,0.3); }
+.btn-success { background: #28a745; color: white; box-shadow: 0 2px 5px rgba(40,167,69,0.3); }
+.btn-danger { background: #dc3545; color: white; box-shadow: 0 2px 5px rgba(220,53,69,0.3); }
+.lang-selector { 
+  position: relative;
+  display: flex; 
+  align-items: center;
+  gap: 8px; 
+  justify-content: center; 
+  margin-bottom: 15px;
+}
+.lang-dropdown { 
+  position: relative;
+  min-width: 140px;
+}
+.lang-select-btn { 
+  width: 100%;
+  padding: 8px 32px 8px 12px; 
+  border: 2px solid #ddd; 
+  background: white; 
+  border-radius: 6px; 
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  text-align: left;
+  position: relative;
+  white-space: nowrap;
+}
+.lang-select-btn.active { background: #007bff; color: white; border-color: #007bff; }
+.lang-select-btn:hover { background: #f8f9fa; }
+.lang-select-btn.active:hover { background: #0056b3; }
+.lang-select-btn::after {
+  content: '▼';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  opacity: 0.6;
+}
+.lang-select-btn.active::after { opacity: 1; }
+
+.lang-menu { 
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 5px;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.lang-menu.show { display: block; }
+.lang-menu-item { 
+  padding: 10px 16px; 
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lang-menu-item:last-child { border-bottom: none; }
+.lang-menu-item:hover { background: #f8f9fa; }
+.lang-menu-item.active { background: #e7f3ff; color: #007bff; font-weight: 500; }
+.lang-menu-item.active::after { content: '✓'; margin-left: 8px; }
+footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+.preview { 
+  border: 2px dashed #ddd; 
+  border-radius: 8px; 
+  background: #fafafa;
+  overflow-y: auto;
+  flex: 1;
+}
+.photo-item { 
+  position: relative; 
+  border-bottom: 2px dashed #ccc;
+  background: white;
+}
+.photo-item:last-child { border-bottom: none; }
+.photo-item img { 
+  width: 100%; 
+  display: block;
+}
+.photo-controls { 
+  position: absolute; 
+  top: 10px; 
+  right: 10px;
+  display: flex;
+  gap: 5px;
+}
+.photo-position { 
+  position: absolute; 
+  top: 10px; 
+  left: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.icon-btn { 
+  width: 48px; 
+  height: 48px; 
+  border: none; 
+  border-radius: 50%; 
+  background: rgba(0,0,0,0.5);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: all 0.2s;
+  backdrop-filter: blur(4px);
+}
+.icon-btn svg { width: 24px; height: 24px; }
+.icon-btn:hover { background: rgba(220,53,69,0.8); transform: scale(1.05); }
+.icon-btn:active { transform: scale(0.95); }
+.empty-state { 
+  text-align: center; 
+  padding: 60px 20px; 
+  color: #999;
+}
+.empty-state svg { 
+  width: 80px; 
+  height: 80px; 
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+input[type="file"] { display: none; }
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+  color: transparent !important;
+  pointer-events: none;
+}
+.shimmer * { visibility: hidden; }
+@media (max-width: 600px) {
+  .container { padding: 15px; border-radius: 0; }
+  h1 { font-size: 20px; }
+  .btn { padding: 10px 16px; font-size: 14px; }
+  .controls { gap: 8px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1 data-i18n="title">Photo Stitcher</h1>
+  
+  <div class="lang-selector shimmer" id="langSelector"></div>
+
+  <div class="controls shimmer">
+    <label class="btn btn-primary">
+      <span>📷</span>
+      <span data-i18n="upload">Upload Photo</span>
+      <input type="file" accept="image/*" multiple onchange="addPhotos(event)">
+    </label>
+    <button class="btn btn-success" onclick="saveResult()" data-i18n="save">
+      <span>💾</span>
+      <span>Save Result</span>
+    </button>
+  </div>
+
+  <div class="preview shimmer" id="preview">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <div data-i18n="empty">Click "Upload Photo" to start</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  © <span id="year"></span> kopihao
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+  
+const translations = {
+  en: { lang: { code: 'en', name: 'English' }, text: { title: 'Photo Stitcher', upload: 'Upload Photo', save: 'Save Result', empty: 'Click "Upload Photo" to start', position: 'of', alert: 'Please add photos first!' } },
+  'zh-cn': { lang: { code: 'zh-cn', name: '简体中文' }, text: { title: '照片拼接器', upload: '上传照片', save: '保存结果', empty: '点击「上传照片」开始', position: '/', alert: '请先添加照片!' } },
+  'zh-tw': { lang: { code: 'zh-tw', name: '繁體中文' }, text: { title: '照片拼接器', upload: '上傳照片', save: '儲存結果', empty: '點擊「上傳照片」開始', position: '/', alert: '請先新增照片!' } },
+  'zh-hk': { lang: { code: 'zh-hk', name: '廣東話' }, text: { title: '相片拼接器', upload: '上載相片', save: '儲存結果', empty: '撳「上載相片」開始', position: '/', alert: '請先加相片!' } },
+  ja: { lang: { code: 'ja', name: '日本語' }, text: { title: '写真スティッチャー', upload: '写真をアップロード', save: '結果を保存', empty: '「写真をアップロード」をクリックして開始', position: '/', alert: '最初に写真を追加してください!' } },
+  de: { lang: { code: 'de', name: 'Deutsch' }, text: { title: 'Foto-Stitcher', upload: 'Foto hochladen', save: 'Ergebnis speichern', empty: 'Klicken Sie auf "Foto hochladen", um zu beginnen', position: 'von', alert: 'Bitte fügen Sie zuerst Fotos hinzu!' } },
+  fr: { lang: { code: 'fr', name: 'Français' }, text: { title: 'Assembleur de Photos', upload: 'Télécharger une Photo', save: 'Enregistrer le Résultat', empty: 'Cliquez sur "Télécharger une Photo" pour commencer', position: 'sur', alert: 'Veuillez d\'abord ajouter des photos!' } },
+  es: { lang: { code: 'es', name: 'Español' }, text: { title: 'Unidor de Fotos', upload: 'Subir Foto', save: 'Guardar Resultado', empty: 'Haz clic en "Subir Foto" para comenzar', position: 'de', alert: '¡Primero agrega fotos!' } },
+  ko: { lang: { code: 'ko', name: '한국어' }, text: { title: '사진 스티처', upload: '사진 업로드', save: '결과 저장', empty: '"사진 업로드"를 클릭하여 시작', position: '/', alert: '먼저 사진을 추가하세요!' } },
+  pt: { lang: { code: 'pt', name: 'Português' }, text: { title: 'Juntador de Fotos', upload: 'Enviar Foto', save: 'Salvar Resultado', empty: 'Clique em "Enviar Foto" para começar', position: 'de', alert: 'Adicione fotos primeiro!' } },
+  ru: { lang: { code: 'ru', name: 'Русский' }, text: { title: 'Сшиватель фото', upload: 'Загрузить фото', save: 'Сохранить результат', empty: 'Нажмите "Загрузить фото" для начала', position: 'из', alert: 'Сначала добавьте фотографии!' } },
+  hi: { lang: { code: 'hi', name: 'हिंदी' }, text: { title: 'फोटो स्टिचर', upload: 'फोटो अपलोड करें', save: 'परिणाम सहेजें', empty: 'शुरू करने के लिए "फोटो अपलोड करें" पर क्लिक करें', position: 'का', alert: 'कृपया पहले फोटो जोड़ें!' } },
+  it: { lang: { code: 'it', name: 'Italiano' }, text: { title: 'Unione Foto', upload: 'Carica Foto', save: 'Salva Risultato', empty: 'Fai clic su "Carica Foto" per iniziare', position: 'di', alert: 'Aggiungi prima le foto!' } },
+  de: { lang: { code: 'de', name: 'Deutsch' }, text: { title: 'Foto-Stitcher', upload: 'Foto hochladen', save: 'Ergebnis speichern', empty: 'Klicken Sie auf "Foto hochladen", um zu beginnen', position: 'von', alert: 'Bitte fügen Sie zuerst Fotos hinzu!' } },
+  ms: { lang: { code: 'ms', name: 'Melayu' }, text: { title: 'Penyambung Foto', upload: 'Muat Naik Foto', save: 'Simpan Hasil', empty: 'Klik "Muat Naik Foto" untuk mula', position: 'daripada', alert: 'Sila tambah foto dahulu!' } },
+  id: { lang: { code: 'id', name: 'Indonesia' }, text: { title: 'Penyambung Foto', upload: 'Unggah Foto', save: 'Simpan Hasil', empty: 'Klik "Unggah Foto" untuk mulai', position: 'dari', alert: 'Silakan tambahkan foto terlebih dahulu!' } },
+  vi: { lang: { code: 'vi', name: 'Tiếng Việt' }, text: { title: 'Ghép Ảnh', upload: 'Tải Ảnh Lên', save: 'Lưu Kết Quả', empty: 'Nhấp "Tải Ảnh Lên" để bắt đầu', position: 'của', alert: 'Vui lòng thêm ảnh trước!' } },
+  th: { lang: { code: 'th', name: 'ภาษาไทย' }, text: { title: 'ตัวต่อภาพ', upload: 'อัปโหลดภาพ', save: 'บันทึกผลลัพธ์', empty: 'คลิก "อัปโหลดภาพ" เพื่อเริ่มต้น', position: 'จาก', alert: 'โปรดเพิ่มภาพก่อน!' } }
+};
+
+let currentLang = 'en';
+let photos = [];
+let dropdownOpen = false;
+let langOrder = Object.keys(translations);
+let detectedCountry = '';
+
+const countryToLang = {
+  CN: 'zh-cn', TW: 'zh-tw', HK: 'zh-hk', JP: 'ja', KR: 'ko',
+  DE: 'de', AT: 'de', CH: 'de', FR: 'fr', BE: 'fr', ES: 'es', MX: 'es',
+  PT: 'pt', BR: 'pt', RU: 'ru', IT: 'it', IN: 'hi',
+  MY: 'ms', BN: 'ms', SG: 'en', ID: 'id', VN: 'vi', TH: 'th', PH: 'en'
+};
+
+const allTranslationKeys = Object.keys(translations);
+const aseanLangs = allTranslationKeys.filter(k => ['ms', 'id', 'vi', 'th'].includes(k));
+const asiaLangs = allTranslationKeys.filter(k => ['zh-cn', 'zh-tw', 'zh-hk', 'ja', 'ko'].includes(k));
+const euLangs = allTranslationKeys.filter(k => ['fr', 'es', 'pt', 'it', 'de'].includes(k));
+
+async function detectAndOrderLanguages() {
+  try {
+    const res = await fetch('https://api.country.is/');
+    const data = await res.json();
+    console.log('IP Geolocation Response:', data);
+    const country = data.country;
+    detectedCountry = country;
+    console.log('Detected Country:', country);
+    
+    const allLangs = Object.keys(translations).filter(l => l !== 'en');
+    const defaultList = allLangs.filter(l => !euLangs.includes(l) && !asiaLangs.includes(l) && !aseanLangs.includes(l));
+    
+    let priorityLangs = [];
+    
+    // Spanish-dominant countries as of 2026
+    if (['ES', 'MX', 'AR', 'CO', 'CL', 'PE', 'VE', 'EC', 'GT', 'CU', 'BO', 'DO', 'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'GQ'].includes(country)) {
+      priorityLangs = ['es', ...euLangs.filter(l => l !== 'es'), ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
+    // Italian-dominant countries as of 2026
+    else if (['IT', 'SM', 'VA'].includes(country)) {
+      priorityLangs = ['it', ...euLangs.filter(l => l !== 'it'), ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
+    // German-dominant countries as of 2026
+    else if (['DE', 'AT', 'LI'].includes(country)) {
+      priorityLangs = ['de', ...euLangs.filter(l => l !== 'de'), ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
+    // French-dominant countries as of 2026
+    else if (['FR', 'BE', 'CH', 'LU', 'MC', 'CD', 'CI', 'CM', 'BF', 'NE', 'SN', 'ML', 'RW', 'BJ', 'BI', 'TG', 'CF', 'CG', 'GA', 'GN', 'TD', 'HT', 'DJ', 'MG', 'KM'].includes(country)) {
+      priorityLangs = ['fr', ...euLangs.filter(l => l !== 'fr'), ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
+    // Portuguese-dominant countries as of 2026
+    else if (['PT', 'BR', 'AO', 'MZ', 'GW', 'TL', 'CV', 'ST'].includes(country)) {
+      priorityLangs = ['pt', ...euLangs.filter(l => l !== 'pt'), ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
+    // Russian-dominant countries as of 2026
+    else if (['RU', 'BY', 'KZ', 'KG', 'TJ'].includes(country)) {
+      priorityLangs = ['ru', 'zh-cn', ...euLangs, ...asiaLangs.filter(l => l !== 'zh-cn'), ...aseanLangs, ...defaultList];
+    }
+    // India
+    else if (country === 'IN') {
+      priorityLangs = ['hi', 'zh-cn', ...euLangs, ...asiaLangs.filter(l => l !== 'zh-cn'), ...aseanLangs, ...defaultList];
+    }
+    // Malaysia, Singapore, Brunei
+    else if (['MY', 'SG', 'BN'].includes(country)) {
+      priorityLangs = ['ms', 'zh-cn', ...aseanLangs.filter(l => l !== 'ms'), ...asiaLangs.filter(l => l !== 'zh-cn'), ...euLangs, ...defaultList];
+    }
+    // Indonesia
+    else if (country === 'ID') {
+      priorityLangs = ['id', 'zh-cn', ...aseanLangs.filter(l => l !== 'id'), ...asiaLangs.filter(l => l !== 'zh-cn'), ...euLangs, ...defaultList];
+    }
+    // Thailand
+    else if (country === 'TH') {
+      priorityLangs = ['th', 'zh-cn', ...aseanLangs.filter(l => l !== 'th'), ...asiaLangs.filter(l => l !== 'zh-cn'), ...euLangs, ...defaultList];
+    }
+    // Vietnam
+    else if (country === 'VN') {
+      priorityLangs = ['vi', 'zh-cn', ...aseanLangs.filter(l => l !== 'vi'), ...asiaLangs.filter(l => l !== 'zh-cn'), ...euLangs, ...defaultList];
+    }
+    // Japan
+    else if (country === 'JP') {
+      priorityLangs = ['ja', 'zh-cn', ...asiaLangs.filter(l => !['ja', 'zh-cn'].includes(l)), ...aseanLangs, ...euLangs, ...defaultList];
+    }
+    // Korea
+    else if (country === 'KR') {
+      priorityLangs = ['ko', 'zh-cn', ...asiaLangs.filter(l => !['ko', 'zh-cn'].includes(l)), ...aseanLangs, ...euLangs, ...defaultList];
+    }
+    // Taiwan
+    else if (country === 'TW') {
+      priorityLangs = ['zh-tw', 'zh-cn', ...asiaLangs.filter(l => !['zh-tw', 'zh-cn'].includes(l)), ...aseanLangs, ...euLangs, ...defaultList];
+    }
+    // Hong Kong
+    else if (country === 'HK') {
+      priorityLangs = ['zh-hk', 'zh-cn', ...asiaLangs.filter(l => !['zh-hk', 'zh-cn'].includes(l)), ...aseanLangs, ...euLangs, ...defaultList];
+    }
+    // China
+    else if (country === 'CN') {
+      priorityLangs = ['zh-cn', ...asiaLangs.filter(l => l !== 'zh-cn'), ...aseanLangs, ...euLangs, ...defaultList];
+    }
+    // Other countries (default)
+    else {
+      priorityLangs = allLangs;
+    }
+    
+    langOrder = ['en', ...priorityLangs];
+  } catch {
+    langOrder = Object.keys(translations);
+  }
+}
+
+function initLanguageSelector() {
+  const selector = document.getElementById('langSelector');
+  
+  let html = `
+    <div class="lang-dropdown">
+      <button class="lang-select-btn active" onclick="toggleLangMenu(event)">🌐 ${translations[currentLang].lang.name}</button>
+      <div class="lang-menu" id="langMenu">`;
+  
+  langOrder.forEach(code => {
+    if (translations[code]) {
+      html += `<div class="lang-menu-item ${code === currentLang ? 'active' : ''}" onclick="setLang('${code}')">${translations[code].lang.name}</div>`;
+    }
+  });
+  
+  html += `</div></div>`;
+  selector.innerHTML = html;
+}
+
+function toggleLangMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('langMenu');
+  dropdownOpen = !dropdownOpen;
+  menu.classList.toggle('show', dropdownOpen);
+}
+
+document.addEventListener('click', () => {
+  if (dropdownOpen) {
+    document.getElementById('langMenu').classList.remove('show');
+    dropdownOpen = false;
+  }
+});
+
+function setLang(lang) {
+  currentLang = lang;
+  initLanguageSelector();
+  
+  const titleEl = document.querySelector('h1[data-i18n="title"]');
+  if (titleEl && translations[lang].text.title) {
+    titleEl.innerHTML = translations[lang].text.title + (detectedCountry ? `<sup>@${detectedCountry}</sup>` : '');
+  }
+  
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    if (el.tagName === 'H1') return;
+    const key = el.getAttribute('data-i18n');
+    if (translations[lang].text[key]) {
+      el.textContent = translations[lang].text[key];
+    }
+  });
+  
+  if (dropdownOpen) {
+    document.getElementById('langMenu').classList.remove('show');
+    dropdownOpen = false;
+  }
+  
+  renderPhotos();
+}
+
+function addPhotos(event) {
+  const files = Array.from(event.target.files);
+  
+  files.forEach(file => {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          photos.push({ src: e.target.result, width: img.width, height: img.height });
+          renderPhotos();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  
+  event.target.value = '';
+}
+
+function removePhoto(index) {
+  photos.splice(index, 1);
+  renderPhotos();
+}
+
+function renderPhotos() {
+  const preview = document.getElementById('preview');
+  
+  if (photos.length === 0) {
+    preview.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+        <div data-i18n="empty">${translations[currentLang].text.empty}</div>
+      </div>
+    `;
+    return;
+  }
+  
+  preview.innerHTML = photos.map((photo, index) => `
+    <div class="photo-item">
+      <div class="photo-position">${index + 1} ${translations[currentLang].text.position} ${photos.length}</div>
+      <div class="photo-controls">
+        <button class="icon-btn" onclick="removePhoto(${index})" title="Remove">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            <line x1="10" y1="11" x2="10" y2="17"/>
+            <line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+        </button>
+      </div>
+      <img src="${photo.src}" alt="Photo ${index + 1}">
+    </div>
+  `).join('');
+}
+
+async function saveResult() {
+  if (photos.length === 0) {
+    alert(translations[currentLang].text.alert);
+    return;
+  }
+
+  const preview = document.getElementById('preview');
+  const previewWidth = preview.offsetWidth;
+  const totalHeight = photos.reduce((sum, p) => sum + Math.round(p.height * previewWidth / p.width), 0);
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = previewWidth;
+  canvas.height = totalHeight;
+  const ctx = canvas.getContext('2d');
+  
+  let currentY = 0;
+  
+  for (const photo of photos) {
+    const img = new Image();
+    img.src = photo.src;
+    await new Promise(resolve => {
+      img.onload = () => {
+        const scaledHeight = Math.round(photo.height * previewWidth / photo.width);
+        ctx.drawImage(img, 0, currentY, previewWidth, scaledHeight);
+        currentY += scaledHeight;
+        resolve();
+      };
+    });
+  }
+  
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `stitched-photo-${Date.now()}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
+}
+
+detectAndOrderLanguages().then(() => {
+  document.querySelector('.lang-selector').classList.remove('shimmer');
+  document.querySelector('.controls').classList.remove('shimmer');
+  document.querySelector('.preview').classList.remove('shimmer');
+  initLanguageSelector();
+  setLang(currentLang);
+});
+</script>
+</body>
+</html>
