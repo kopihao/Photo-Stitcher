@@ -504,14 +504,77 @@ async function saveResult() {
     });
   }
   
-  canvas.toBlob(blob => {
-    const url = URL.createObjectURL(blob);
+  const dataUrl = canvas.toDataURL('image/png');
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  if (!isMobile) {
+    const win = window.open();
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+          }
+          .header {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+          }
+          h1 { font-size: 20px; color: #333; margin-bottom: 8px; }
+          .instruction {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+          }
+          .icon { font-size: 24px; margin-bottom: 8px; }
+          img {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            background: white;
+          }
+          footer {
+            margin-top: 20px;
+            color: #999;
+            font-size: 12px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="icon">📸</div>
+          <h1>Your Stitched Photo</h1>
+          <div class="instruction">
+            <strong>Long press</strong> the image below<br>
+            Then select <strong>"Save Image"</strong>
+          </div>
+        </div>
+        <img src="${dataUrl}" alt="Stitched Photo">
+        <footer>© ${new Date().getFullYear()} kopihao</footer>
+      </body>
+      </html>
+    `);
+  } else {
     const a = document.createElement('a');
-    a.href = url;
+    a.href = dataUrl;
     a.download = `stitched-photo-${Date.now()}.png`;
     a.click();
-    URL.revokeObjectURL(url);
-  }, 'image/png');
+  }
 }
 
 detectAndOrderLanguages().then(() => {
