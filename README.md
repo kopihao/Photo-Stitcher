@@ -9,7 +9,7 @@ A Progressive Web App to stitch photos together vertically.
 - No server required - runs entirely in browser
 
 ## Live Demo
-Visit: `https://YOUR_USERNAME.github.io/photo-stitcher/`
+Visit: https://kopihao.github.io/Photo-Stitcher/
 
 ## Author
 © 2025 kopihao
