@@ -246,7 +246,13 @@ const translations = {
   ms: { lang: { code: 'ms', name: 'Melayu' }, text: { title: 'Penyambung Foto', upload: 'Muat Naik Foto', save: 'Simpan Hasil', empty: 'Klik "Muat Naik Foto" untuk mula', position: 'daripada', alert: 'Sila tambah foto dahulu!' } },
   id: { lang: { code: 'id', name: 'Indonesia' }, text: { title: 'Penyambung Foto', upload: 'Unggah Foto', save: 'Simpan Hasil', empty: 'Klik "Unggah Foto" untuk mulai', position: 'dari', alert: 'Silakan tambahkan foto terlebih dahulu!' } },
   vi: { lang: { code: 'vi', name: 'Tiếng Việt' }, text: { title: 'Ghép Ảnh', upload: 'Tải Ảnh Lên', save: 'Lưu Kết Quả', empty: 'Nhấp "Tải Ảnh Lên" để bắt đầu', position: 'của', alert: 'Vui lòng thêm ảnh trước!' } },
-  th: { lang: { code: 'th', name: 'ภาษาไทย' }, text: { title: 'ตัวต่อภาพ', upload: 'อัปโหลดภาพ', save: 'บันทึกผลลัพธ์', empty: 'คลิก "อัปโหลดภาพ" เพื่อเริ่มต้น', position: 'จาก', alert: 'โปรดเพิ่มภาพก่อน!' } }
+  th: { lang: { code: 'th', name: 'ภาษาไทย' }, text: { title: 'ตัวต่อภาพ', upload: 'อัปโหลดภาพ', save: 'บันทึกผลลัพธ์', empty: 'คลิก "อัปโหลดภาพ" เพื่อเริ่มต้น', position: 'จาก', alert: 'โปรดเพิ่มภาพก่อน!' } },
+  ar: { lang: { code: 'ar', name: 'العربية' }, text: { title: 'دمج الصور', upload: 'تحميل صورة', save: 'حفظ النتيجة', empty: 'انقر على "تحميل صورة" للبدء', position: 'من', alert: 'الرجاء إضافة الصور أولاً!' } },
+  el: { lang: { code: 'el', name: 'Ελληνικά' }, text: { title: 'Συνένωση Φωτογραφιών', upload: 'Ανέβασμα Φωτογραφίας', save: 'Αποθήκευση Αποτελέσματος', empty: 'Κάντε κλικ στο "Ανέβασμα Φωτογραφίας" για να ξεκινήσετε', position: 'από', alert: 'Παρακαλώ προσθέστε φωτογραφίες πρώτα!' } },
+  pl: { lang: { code: 'pl', name: 'Polski' }, text: { title: 'Łączenie Zdjęć', upload: 'Prześlij Zdjęcie', save: 'Zapisz Wynik', empty: 'Kliknij "Prześlij Zdjęcie", aby rozpocząć', position: 'z', alert: 'Najpierw dodaj zdjęcia!' } },
+  fil: { lang: { code: 'fil', name: 'Filipino' }, text: { title: 'Pagsasama ng Larawan', upload: 'Mag-upload ng Larawan', save: 'I-save ang Resulta', empty: 'I-click ang "Mag-upload ng Larawan" para magsimula', position: 'sa', alert: 'Magdagdag muna ng mga larawan!' } },
+  sv: { lang: { code: 'sv', name: 'Svenska' }, text: { title: 'Fotosömmare', upload: 'Ladda upp Foto', save: 'Spara Resultat', empty: 'Klicka på "Ladda upp Foto" för att börja', position: 'av', alert: 'Lägg till foton först!' } },
+  nl: { lang: { code: 'nl', name: 'Nederlands' }, text: { title: 'Foto Samenvoegen', upload: 'Foto Uploaden', save: 'Resultaat Opslaan', empty: 'Klik op "Foto Uploaden" om te beginnen', position: 'van', alert: 'Voeg eerst foto\'s toe!' } }
 };
 
 let currentLang = 'en';
@@ -301,9 +307,33 @@ async function detectAndOrderLanguages() {
     else if (['PT', 'BR', 'AO', 'MZ', 'GW', 'TL', 'CV', 'ST'].includes(country)) {
       priorityLangs = ['pt', ...euLangs.filter(l => l !== 'pt'), ...asiaLangs, ...aseanLangs, ...defaultList];
     }
+    // Arabic-dominant countries as of 2026
+    else if (['SA', 'EG', 'DZ', 'SD', 'IQ', 'MA', 'YE', 'SY', 'TN', 'JO', 'LY', 'LB', 'PS', 'OM', 'KW', 'MR', 'AE', 'QA', 'BH', 'DJ', 'KM'].includes(country)) {
+      priorityLangs = ['ar', ...euLangs, ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
     // Russian-dominant countries as of 2026
     else if (['RU', 'BY', 'KZ', 'KG', 'TJ'].includes(country)) {
       priorityLangs = ['ru', 'zh-cn', ...euLangs, ...asiaLangs.filter(l => l !== 'zh-cn'), ...aseanLangs, ...defaultList];
+    }
+    // Greek-dominant countries as of 2026
+    else if (['GR', 'CY'].includes(country)) {
+      priorityLangs = ['el', ...euLangs, ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
+    // Polish-dominant countries as of 2026
+    else if (country === 'PL') {
+      priorityLangs = ['pl', ...euLangs, ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
+    // Swedish-dominant countries as of 2026
+    else if (country === 'SE') {
+      priorityLangs = ['sv', ...euLangs, ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
+    // Dutch-dominant countries as of 2026
+    else if (['NL', 'SR'].includes(country)) {
+      priorityLangs = ['nl', ...euLangs, ...asiaLangs, ...aseanLangs, ...defaultList];
+    }
+    // Filipino-dominant countries as of 2026
+    else if (country === 'PH') {
+      priorityLangs = ['fil', 'zh-cn', ...aseanLangs, ...asiaLangs.filter(l => l !== 'zh-cn'), ...euLangs, ...defaultList];
     }
     // India
     else if (country === 'IN') {
