@@ -33,7 +33,7 @@ Ideal for organizations and individuals requiring strict data privacy compliance
 🔗 [https://kopihao.github.io/Photo-Stitcher/](https://kopihao.github.io/Photo-Stitcher/)
 
 ## Author
-**[kopihao](https://www.linkedin.com/in/kopihao/)** 
+Anak Malaysia **[kopihao](https://www.linkedin.com/in/kopihao/)** 
 
 ## License
 Copyright © 2026 kopihao
