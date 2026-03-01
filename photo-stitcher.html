@@ -780,9 +780,11 @@ function showPromoteUserRetentionBanner() {
     title: 'Photo Stitcher by kopihao',
     content: 'Stitch photos together in offline mode now by ' + instruction,
     dismissable: false,
-    autoHideSeconds: 7
+    autoHideSeconds: 5
   });
 }
+
+showPromoteUserRetentionBanner();
 
 detectAndOrderLanguages().then(() => {
   document.querySelector('.lang-selector').classList.remove('shimmer');
@@ -790,7 +792,6 @@ detectAndOrderLanguages().then(() => {
   document.querySelector('.preview').classList.remove('shimmer');
   initLanguageSelector();
   setLang(currentLang);
-  showPromoteUserRetentionBanner();
 });
 
 if('serviceWorker'in navigator){
