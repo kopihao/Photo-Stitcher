@@ -436,8 +436,16 @@ const asiaLangs = allTranslationKeys.filter(k => ['zh-cn', 'zh-tw', 'zh-hk', 'ja
 const euLangs = allTranslationKeys.filter(k => ['fr', 'es', 'pt', 'it', 'de'].includes(k));
 
 async function detectAndOrderLanguages() {
+  if (!navigator.onLine) {
+    langOrder = Object.keys(translations);
+    return;
+  }
+  
   try {
-    const res = await fetch('https://api.country.is/');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch('https://api.country.is/', { signal: controller.signal });
+    clearTimeout(timeoutId);
     const data = await res.json();
     console.log('IP Geolocation Response:', data);
     const country = data.country;
