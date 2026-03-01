@@ -4,8 +4,12 @@
 <meta charset="UTF-8">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="shortcut icon" href="icon-192.png" type="image/png">
-<meta http-equiv="refresh" content="0;url=photo-stitcher.html">
-<script>window.location.href="photo-stitcher.html"</script>
+<meta http-equiv="refresh" content="0;url=photo-stitcher.html?ts=" id="metaRefresh">
+<script>
+const ts = Date.now();
+document.getElementById('metaRefresh').content = '0;url=photo-stitcher.html?ts=' + ts;
+window.location.href = 'photo-stitcher.html?ts=' + ts;
+</script>
 </head>
 <body></body>
 </html>
