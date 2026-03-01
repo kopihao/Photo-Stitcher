@@ -12,6 +12,13 @@ Photo Stitcher is a client-side image processing application that enables users 
 - **Installable On Mobile** - Add to home screen on Android/iOS
 - **Zero Latency** - No server uploads, no network delays, instant processing
 
+## Use Cases
+- Document compilation
+- Screenshot consolidation
+- Social media content creation
+- Receipt and invoice management
+- Privacy-sensitive image processing
+
 ## Privacy & Security
 **Data Sovereignty Guarantee:**
 - ✅ 100% client-side processing
@@ -21,13 +28,6 @@ Photo Stitcher is a client-side image processing application that enables users 
 - ✅ Your photos never leave your device
 
 Ideal for organizations and individuals requiring strict data privacy compliance.
-
-## Use Cases
-- Document compilation
-- Screenshot consolidation
-- Social media content creation
-- Receipt and invoice management
-- Privacy-sensitive image processing
 
 ## Live Demo
 🔗 [https://kopihao.github.io/Photo-Stitcher/](https://kopihao.github.io/Photo-Stitcher/)
