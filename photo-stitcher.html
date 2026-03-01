@@ -784,6 +784,13 @@ detectAndOrderLanguages().then(() => {
   setLang(currentLang);
   showPromoteUserRetentionBanner();
 });
+
+if('serviceWorker'in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    reg.update();
+    setInterval(()=>reg.update(),3600000);
+  });
+}
 </script>
 </body>
 </html>
