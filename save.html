@@ -86,9 +86,77 @@ footer {
   animation: shimmer 2s infinite;
   min-height: 200px;
 }
+.top-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #e8e8e8 0%, #d0d0d0 100%);
+  color: #1c1c1e;
+  padding: 12px 15px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  z-index: 1000;
+  display: none;
+  animation: slideDown 0.3s ease-out;
+  backdrop-filter: blur(10px);
+}
+.top-banner.show { display: flex; align-items: center; gap: 12px; }
+.top-banner-close {
+  background: rgba(28,28,30,0.1);
+  border: none;
+  color: #1c1c1e;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.top-banner-close:hover { background: rgba(28,28,30,0.2); }
+.top-banner-icon { width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 32px; background: transparent; border-radius: 8px; padding: 4px; }
+.top-banner-content { flex: 1; min-width: 0; }
+.top-banner-title { font-weight: 600; font-size: 15px; margin-bottom: 2px; color: #1c1c1e; }
+.top-banner-text { font-size: 13px; opacity: 0.8; color: #3a3a3c; }
+.top-banner-btn {
+  background: #5a5a5e;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.top-banner-btn:hover { transform: scale(1.05); background: #48484a; }
+.top-banner-btn:active { transform: scale(0.95); }
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
+}
+body { padding-top: 60px; }
 </style>
 </head>
 <body>
+<div id="topBanner" class="top-banner">
+  <button class="top-banner-close" onclick="dismissBanner()" aria-label="Close">×</button>
+  <div class="top-banner-icon"></div>
+  <div class="top-banner-content">
+    <div class="top-banner-title"></div>
+    <div class="top-banner-text"></div>
+  </div>
+  <button class="top-banner-btn" onclick="handleBannerAction()"></button>
+</div>
 <div class="header">
   <div class="icon">🖼️</div>
   <h1>Your Stitched Photo</h1>
@@ -101,7 +169,58 @@ footer {
 <div id="debug" class="debug" style="display:none;"></div>
 <footer>© <span id="year"></span> kopihao</footer>
 <script>
+let bannerTimeout = null;
+let bannerAction = null;
+
+function showBanner(config) {
+  const { icon = '', title = '', content = '', buttonText = '', action = null, dismissable = true, autoHideSeconds = 0 } = config;
+  const banner = document.getElementById('topBanner');
   
+  const iconEl = banner.querySelector('.top-banner-icon');
+  iconEl.textContent = icon;
+  
+  banner.querySelector('.top-banner-title').textContent = title;
+  banner.querySelector('.top-banner-text').textContent = content;
+  banner.querySelector('.top-banner-btn').textContent = buttonText;
+  banner.querySelector('.top-banner-close').style.display = dismissable ? 'flex' : 'none';
+  banner.querySelector('.top-banner-btn').style.display = buttonText ? 'block' : 'none';
+  
+  bannerAction = action;
+  banner.classList.add('show');
+  
+  if (bannerTimeout) clearTimeout(bannerTimeout);
+  
+  if (autoHideSeconds > 0) {
+    bannerTimeout = setTimeout(() => dismissBanner(), autoHideSeconds * 1000);
+  }
+}
+
+function handleBannerAction() {
+  if (bannerAction) bannerAction();
+}
+
+function dismissBanner() {
+  const banner = document.getElementById('topBanner');
+  banner.style.animation = 'slideUp 0.3s ease-out forwards';
+  setTimeout(() => {
+    banner.classList.remove('show');
+    banner.style.animation = '';
+  }, 300);
+  if (bannerTimeout) clearTimeout(bannerTimeout);
+}
+
+function showContributeTipsBanner() {
+  showBanner({
+    icon: '☕',
+    title: 'Enjoying Photo Stitcher?',
+    content: 'Support this free tool with a coffee tip to keep it running and ad-free!',
+    buttonText: 'Buy Me a Coffee',
+    action: () => window.open('https://ko-fi.com/kopihao', '_blank'),
+    dismissable: true,
+    autoHideSeconds: 0
+  });
+}
+
 const DEBUG_MODE = document.querySelector('meta[name="debug-mode"]').content === 'true';
 
 function showError(message) {
@@ -133,6 +252,7 @@ if (data) {
   img.onload = () => {
     img.classList.remove('shimmer');
     document.querySelector('h1').textContent = 'Your Stitched Photo Is Ready';
+    showContributeTipsBanner();
   };
   img.onerror = () => showError('Failed to load image');
   img.src = data;
@@ -158,6 +278,7 @@ if (data) {
       img.onload = () => {
         img.classList.remove('shimmer');
         document.querySelector('h1').textContent = 'Your Stitched Photo Is Ready';
+        showContributeTipsBanner();
       };
       img.onerror = () => showError('Failed to load image');
       img.src = dataUrl;

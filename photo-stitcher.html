@@ -307,10 +307,12 @@ body { padding-top: 60px; }
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
   
-  // Clear session storage on fresh load (but preserve image data)
+  // Clear photo-related session storage on fresh load
   const hasImageData = sessionStorage.getItem('stitchedPhoto') || sessionStorage.getItem('stitchedPhotoChunks');
   if (!hasImageData) {
+    const saveCount = sessionStorage.getItem('saveCount');
     sessionStorage.clear();
+    if (saveCount) sessionStorage.setItem('saveCount', saveCount);
   }
   
 const translations = {
@@ -718,8 +720,6 @@ async function saveResult() {
     });
   }
 
-  // const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
   const dataUrl = canvas.toDataURL('image/png');
   
   try {
@@ -764,6 +764,38 @@ async function saveResult() {
     }
   }
 
+  let saveCount = parseInt(sessionStorage.getItem('saveCount') || '0');
+  saveCount++;
+  sessionStorage.setItem('saveCount', saveCount.toString());
+  
+  const isPrime = n => {
+    if (n < 2) return false;
+    for (let i = 2; i <= Math.sqrt(n); i++) if (n % i === 0) return false;
+    return true;
+  };
+  
+  const showBanner = (saveCount <= 10 && isPrime(saveCount)) || 
+                     (saveCount > 10 && saveCount <= 50 && saveCount % 5 === 0) || 
+                     (saveCount > 50 && saveCount % 2 === 0);
+  
+  console.log(`saveCount: ${saveCount}, show: ${showBanner}`);
+  
+  if (showBanner) {
+    showContributeTipsBanner();
+  }
+
+}
+
+function showContributeTipsBanner() {
+  showBanner({
+    icon: '☕',
+    title: 'Enjoying Photo Stitcher?',
+    content: 'Support this free tool with a coffee tip to keep it running and ad-free!',
+    buttonText: 'Buy Me a Coffee',
+    action: () => window.open('https://ko-fi.com/kopihao', '_blank'),
+    dismissable: true,
+    autoHideSeconds: 0
+  });
 }
 
 function showPromoteUserRetentionBanner() {
