@@ -559,7 +559,7 @@ async function saveResult() {
   const dataUrl = canvas.toDataURL('image/png');
   
  try {
-    throw new Error('Simulated download error'); // Remove this line to enable direct download in supported browsers
+    // throw new Error('Simulated download error'); // Remove this line to enable direct download in supported browsers
     const a = document.createElement('a');
     a.href = dataUrl;
     a.download = `stitched-photo-${Date.now()}.png`;
