@@ -160,7 +160,7 @@ body { padding-top: 60px; }
 <div class="header">
   <div class="icon">🖼️</div>
   <h1>Your Stitched Photo</h1>
-  <div class="instruction">
+  <div class="instruction" id="instruction">
     <strong>Long press</strong> the image below<br>
     Then select <strong>"Save Image"</strong>
   </div>
@@ -245,6 +245,20 @@ function debugLog(message) {
 }
 
 document.getElementById('year').textContent = new Date().getFullYear();
+
+const ua = navigator.userAgent;
+const isIOS = /iPad|iPhone|iPod/.test(ua);
+const isAndroid = /Android/.test(ua);
+const instructionEl = document.getElementById('instruction');
+
+if (isIOS) {
+  instructionEl.innerHTML = '<strong>Tap and hold</strong> the image below<br>Then select <strong>"Add to Photos"</strong> or <strong>"Save to Files"</strong>';
+} else if (isAndroid) {
+  instructionEl.innerHTML = '<strong>Long press</strong> the image below<br>Then select <strong>"Download image"</strong> or <strong>"Save image"</strong>';
+} else {
+  instructionEl.innerHTML = '<strong>Right-click</strong> the image below<br>Then select <strong>"Save image as..."</strong>';
+}
+
 const img = document.getElementById('result');
 const data = sessionStorage.getItem('stitchedPhoto');
 debugLog('Direct data: ' + (data ? 'Found' : 'Not found'));
