@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="debug-mode" content="false">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="alternate icon" href="icon-192.png" type="image/png">
-<title>Save Photo - Photo Stitcher</title>
+<title>Save Photo - Photo Stitcher App</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { 
@@ -33,40 +34,137 @@ h1 { font-size: 20px; color: #333; margin-bottom: 8px; }
   font-size: 14px;
   line-height: 1.5;
 }
+.error {
+  color: #dc2626;
+  font-weight: 500;
+}
+.btn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
 .icon { font-size: 24px; margin-bottom: 8px; }
+.icon.error { filter: grayscale(1) opacity(0.6); }
 img {
   max-width: 100%;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   background: white;
 }
+.debug {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px 0;
+  font-family: monospace;
+  font-size: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+}
 footer {
   margin-top: 20px;
   color: #999;
   font-size: 12px;
 }
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+  min-height: 200px;
+}
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="icon">📸</div>
+  <div class="icon">🖼️</div>
   <h1>Your Stitched Photo</h1>
   <div class="instruction">
     <strong>Long press</strong> the image below<br>
     Then select <strong>"Save Image"</strong>
   </div>
 </div>
-<img id="result" alt="Stitched Photo">
+<img id="result" alt="Stitched Photo" class="shimmer">
+<div id="debug" class="debug" style="display:none;"></div>
 <footer>© <span id="year"></span> kopihao</footer>
 <script>
+  
+const DEBUG_MODE = document.querySelector('meta[name="debug-mode"]').content === 'true';
+
+function showError(message) {
+  img.classList.remove('shimmer');
+  img.style.display = 'none';
+  document.querySelector('.icon').classList.add('error');
+  if (message === 'No image data loaded') {
+    document.querySelector('h1').textContent = 'Your Stitched Photo Not Found';
+  }
+  document.querySelector('.instruction').innerHTML = `<div class="error">${message}</div><button class="btn" onclick="window.close()">Close Tab</button>`;
+}
+
+function debugLog(message) {
+  if (DEBUG_MODE) {
+    console.log(message);
+    const debugDiv = document.getElementById('debug');
+    if (debugDiv) {
+      debugDiv.style.display = 'block';
+      debugDiv.innerHTML += message + '<br>';
+    }
+  }
+}
+
 document.getElementById('year').textContent = new Date().getFullYear();
 const img = document.getElementById('result');
 const data = sessionStorage.getItem('stitchedPhoto');
+debugLog('Direct data: ' + (data ? 'Found' : 'Not found'));
 if (data) {
+  img.onload = () => {
+    img.classList.remove('shimmer');
+    document.querySelector('h1').textContent = 'Your Stitched Photo Is Ready';
+  };
+  img.onerror = () => showError('Failed to load image');
   img.src = data;
   sessionStorage.removeItem('stitchedPhoto');
 } else {
-  document.body.innerHTML = '<p style="text-align:center;padding:50px;font-family:sans-serif">No image data found</p>';
+  const chunkCount = sessionStorage.getItem('stitchedPhotoChunks');
+  debugLog('Chunk count: ' + chunkCount);
+  if (chunkCount && !isNaN(parseInt(chunkCount))) {
+    let dataUrl = '';
+    const totalChunks = parseInt(chunkCount);
+    debugLog('Total chunks: ' + totalChunks);
+    for (let i = 0; i < totalChunks; i++) {
+      const chunk = sessionStorage.getItem(`stitchedPhotoChunk_${i}`);
+      debugLog(`Chunk ${i}: ` + (chunk ? `${chunk.length} chars` : 'Missing'));
+      if (chunk) {
+        dataUrl += chunk;
+        sessionStorage.removeItem(`stitchedPhotoChunk_${i}`);
+      }
+    }
+    sessionStorage.removeItem('stitchedPhotoChunks');
+    debugLog('Final dataUrl length: ' + dataUrl.length);
+    if (dataUrl && dataUrl.length > 0) {
+      img.onload = () => {
+        img.classList.remove('shimmer');
+        document.querySelector('h1').textContent = 'Your Stitched Photo Is Ready';
+      };
+      img.onerror = () => showError('Failed to load image');
+      img.src = dataUrl;
+    } else {
+      showError('No image data loaded');
+    }
+  } else {
+    showError('No image data loaded');
+  }
 }
 </script>
 </body>

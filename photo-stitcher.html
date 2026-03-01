@@ -228,6 +228,12 @@ input[type="file"] { display: none; }
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
   
+  // Clear session storage on fresh load (but preserve image data)
+  const hasImageData = sessionStorage.getItem('stitchedPhoto') || sessionStorage.getItem('stitchedPhotoChunks');
+  if (!hasImageData) {
+    sessionStorage.clear();
+  }
+  
 const translations = {
   en: { lang: { code: 'en', name: 'English' }, text: { title: 'Photo Stitcher', upload: 'Upload Photo', save: 'Save Result', empty: 'Click "Upload Photo" to start', position: 'of', alert: 'Please add photos first!' } },
   'zh-cn': { lang: { code: 'zh-cn', name: '简体中文' }, text: { title: '照片拼接器', upload: '上传照片', save: '保存结果', empty: '点击「上传照片」开始', position: '/', alert: '请先添加照片!' } },
@@ -533,19 +539,53 @@ async function saveResult() {
       };
     });
   }
-  
+
+  // const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   const dataUrl = canvas.toDataURL('image/png');
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   
-  if (isMobile) {
-    sessionStorage.setItem('stitchedPhoto', dataUrl);
-    window.open('save.html', '_blank');
-  } else {
+ try {
+    throw new Error('Simulated download error'); // Remove this line to enable direct download in supported browsers
     const a = document.createElement('a');
     a.href = dataUrl;
     a.download = `stitched-photo-${Date.now()}.png`;
     a.click();
+  } catch {
+    try {
+      // Clear any existing chunks first
+      sessionStorage.clear();
+      //const chunkSize = 1000000; // 1MB chunks
+      const chunkSize = 500000; // 500KB chunks
+      const chunks = [];
+      for (let i = 0; i < dataUrl.length; i += chunkSize) {
+        chunks.push(dataUrl.slice(i, i + chunkSize));
+      }
+      sessionStorage.setItem('stitchedPhotoChunks', chunks.length.toString());
+      for (let i = 0; i < chunks.length; i++) {
+        sessionStorage.setItem(`stitchedPhotoChunk_${i}`, chunks[i]);
+      }
+      window.open('save.html', '_blank');
+    } catch (storageError) {
+      // Reduce image quality and try again
+      try {
+        sessionStorage.clear();
+        const reducedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        const chunkSize = 500000;
+        const chunks = [];
+        for (let i = 0; i < reducedDataUrl.length; i += chunkSize) {
+          chunks.push(reducedDataUrl.slice(i, i + chunkSize));
+        }
+        sessionStorage.setItem('stitchedPhotoChunks', chunks.length.toString());
+        for (let i = 0; i < chunks.length; i++) {
+          sessionStorage.setItem(`stitchedPhotoChunk_${i}`, chunks[i]);
+        }
+        window.open('save.html', '_blank');
+      } catch {
+        alert('Image too large. Please try with fewer or smaller images.');
+      }
+    }
   }
+
 }
 
 detectAndOrderLanguages().then(() => {
