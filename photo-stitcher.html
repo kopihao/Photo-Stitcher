@@ -18,7 +18,7 @@ body {
   flex-direction: column;
 }
 .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex: 1; display: flex; flex-direction: column; position: relative; }
-h1 { font-size: 24px; margin-bottom: 20px; text-align: center; color: #333; }
+h1 { font-size: 24px; margin-bottom: 20px; text-align: center; color: #333; padding-left: 20px; padding-right: 20px; padding-top: 5px; }
 h1 sup { font-size: 12px; color: #999; font-weight: normal; margin-left: 4px; }
 .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
 .btn { 
@@ -47,18 +47,38 @@ h1 sup { font-size: 12px; color: #999; font-weight: normal; margin-left: 4px; }
   position: relative;
 }
 .lang-select-btn { 
-  padding: 0;
+  padding: 6px;
   border: none;
   background: none;
   cursor: pointer;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
 }
-.lang-select-btn svg { width: 24px; height: 24px; stroke: #007bff; transform: rotate(180deg); }
-.lang-select-btn:hover { opacity: 0.7; }
+.lang-select-btn svg { width: 18px; height: 18px; fill: #007bff; transform: rotate(180deg); transition: fill 0.3s; }
+.lang-select-btn:hover,
+.lang-select-btn.active { background: #48484a; }
+.lang-select-btn:hover svg,
+.lang-select-btn.active svg { fill: #fff; }
+.lang-select-btn:hover::after,
+.lang-select-btn.active::after {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer-sweep 1s infinite;
+}
+@keyframes shimmer-sweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
 
 .lang-menu { 
   display: none;
@@ -170,7 +190,7 @@ input[type="file"] { display: none; }
 .shimmer * { visibility: hidden; }
 @media (max-width: 600px) {
   .container { padding: 15px; border-radius: 0; }
-  h1 { font-size: 20px; }
+  h1 { font-size: 20px; padding-right: 40px; }
   .btn { padding: 10px 16px; font-size: 14px; }
   .controls { gap: 8px; }
 }
@@ -404,13 +424,16 @@ function initLanguageSelector() {
 function toggleLangMenu(e) {
   e.stopPropagation();
   const menu = document.getElementById('langMenu');
+  const btn = e.currentTarget;
   dropdownOpen = !dropdownOpen;
   menu.classList.toggle('show', dropdownOpen);
+  btn.classList.toggle('active', dropdownOpen);
 }
 
 document.addEventListener('click', () => {
   if (dropdownOpen) {
     document.getElementById('langMenu').classList.remove('show');
+    document.querySelector('.lang-select-btn').classList.remove('active');
     dropdownOpen = false;
   }
 });
