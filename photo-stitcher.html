@@ -360,7 +360,11 @@ function showBanner(config) {
   
   const iconEl = banner.querySelector('.top-banner-icon');
   if (icon.startsWith('http') || icon.endsWith('.svg') || icon.endsWith('.png')) {
-    iconEl.innerHTML = `<img src="${icon}" alt="">`;
+    const img = document.createElement('img');
+    img.src = icon;
+    img.alt = '';
+    iconEl.textContent = '';
+    iconEl.appendChild(img);
   } else {
     iconEl.textContent = icon;
   }
