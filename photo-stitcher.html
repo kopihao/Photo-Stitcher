@@ -609,48 +609,56 @@ function getMaxWidth() {
 function addPhotos(event) {
   const files = Array.from(event.target.files);
   const maxW = getMaxWidth();
+  let pending = files.filter(f => f.type.startsWith('image/')).length;
+  if (!pending) return;
   
   files.forEach(file => {
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          let { width, height } = img;
-          let src = e.target.result;
-          if (width > maxW) {
-            const scale = maxW / width;
-            const c = document.createElement('canvas');
-            c.width = maxW;
-            c.height = Math.round(height * scale);
-            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-            src = c.toDataURL('image/jpeg', 0.85);
-            width = c.width;
-            height = c.height;
-            c.width = c.height = 0;
-          }
+    if (!file.type.startsWith('image/')) return;
+    const blobUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxW) {
+        const scale = maxW / width;
+        const c = document.createElement('canvas');
+        c.width = maxW;
+        c.height = Math.round(height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        width = c.width;
+        height = c.height;
+        c.toBlob(blob => {
+          c.width = c.height = 0;
+          URL.revokeObjectURL(blobUrl);
           img.onload = null;
           img.src = '';
-          photos.push({ src, width, height });
-          renderPhotos();
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
+          photos.push({ blob, width, height, url: null });
+          if (--pending === 0) renderPhotos();
+        }, 'image/jpeg', 0.85);
+      } else {
+        img.onload = null;
+        img.src = '';
+        photos.push({ blob: file, width, height, url: null });
+        URL.revokeObjectURL(blobUrl);
+        if (--pending === 0) renderPhotos();
+      }
+    };
+    img.src = blobUrl;
   });
   
   event.target.value = '';
 }
 
 function removePhoto(index) {
-  photos.splice(index, 1);
+  const removed = photos.splice(index, 1)[0];
+  if (removed && removed.url) URL.revokeObjectURL(removed.url);
   renderPhotos();
 }
 
 function renderPhotos() {
   const preview = document.getElementById('preview');
   
+  photos.forEach(p => { if (p.url) { URL.revokeObjectURL(p.url); p.url = null; } });
+
   if (photos.length === 0) {
     preview.innerHTML = `
       <div class="empty-state">
@@ -665,6 +673,8 @@ function renderPhotos() {
     return;
   }
   
+  photos.forEach(p => { p.url = URL.createObjectURL(p.blob); });
+  
   preview.innerHTML = photos.map((photo, index) => `
     <div class="photo-item">
       <div class="photo-position">${index + 1} ${translations[currentLang].text.position} ${photos.length}</div>
@@ -678,7 +688,7 @@ function renderPhotos() {
           </svg>
         </button>
       </div>
-      <img src="${photo.src}" alt="Photo ${index + 1}">
+      <img src="${photo.url}" alt="Photo ${index + 1}">
     </div>
   `).join('');
 }
@@ -693,7 +703,7 @@ function storeAndOpenSave(dataUrl) {
   for (let i = 0; i < totalChunks; i++) {
     sessionStorage.setItem(`stitchedPhotoChunk_${i}`, dataUrl.slice(i * chunkSize, (i + 1) * chunkSize));
   }
-  window.open('save.html', '_blank', 'noopener');
+  window.open('save.html', '_blank');
 }
 
 async function saveResult() {
@@ -710,36 +720,41 @@ async function saveResult() {
   await new Promise(r => setTimeout(r, 0));
 
   const preview = document.getElementById('preview');
-  const previewWidth = preview.offsetWidth;
-  const totalHeight = photos.reduce((sum, p) => sum + Math.round(p.height * previewWidth / p.width), 0);
+  const stitchWidth = getMaxWidth();
+  const totalHeight = photos.reduce((sum, p) => sum + Math.round(p.height * stitchWidth / p.width), 0);
   
   const canvas = document.createElement('canvas');
-  canvas.width = previewWidth;
+  canvas.width = stitchWidth;
   canvas.height = totalHeight;
   const ctx = canvas.getContext('2d');
   
   let currentY = 0;
   
   for (const photo of photos) {
-    const img = new Image();
-    img.src = photo.src;
-    await new Promise(resolve => {
-      img.onload = () => {
-        const scaledHeight = Math.round(photo.height * previewWidth / photo.width);
-        ctx.drawImage(img, 0, currentY, previewWidth, scaledHeight);
-        currentY += scaledHeight;
-        img.onload = null;
-        img.src = '';
-        resolve();
-      };
-    });
+    const scaledHeight = Math.round(photo.height * stitchWidth / photo.width);
+    if (typeof createImageBitmap !== 'undefined') {
+      const bmp = await createImageBitmap(photo.blob);
+      ctx.drawImage(bmp, 0, currentY, stitchWidth, scaledHeight);
+      bmp.close();
+    } else {
+      const url = URL.createObjectURL(photo.blob);
+      const img = new Image();
+      img.src = url;
+      await new Promise(resolve => { img.onload = resolve; });
+      ctx.drawImage(img, 0, currentY, stitchWidth, scaledHeight);
+      img.onload = null;
+      img.src = '';
+      URL.revokeObjectURL(url);
+    }
+    currentY += scaledHeight;
   }
 
   const filename = `kopihao-stitched-photo-${Date.now()}.png`;
   let saved = false;
 
   // Primary: blob download (no base64 overhead)
-  try {
+  try { 
+    // throw 'TESTING: force fallback';
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     if (blob) {
       const url = URL.createObjectURL(blob);
