@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="shortcut icon" href="icon-192.png" type="image/png">
+<meta name="description" content="Stitch photos together vertically — 100% private, offline, no uploads. Free PWA tool.">
+<meta name="theme-color" content="#007bff">
 <title>Photo Stitcher</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -348,43 +350,7 @@ let langOrder = Object.keys(translations);
 let detectedCountry = '';
 let bannerTimeout = null;
 let bannerAction = null;
-let deferredPrompt = null;
 
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-});
-
-function addToHomeScreen() {
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  
-  if (isMobile) {
-    if (deferredPrompt && isAndroid) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        deferredPrompt = null;
-      }).catch(() => addToBookmark());
-    } else if (isIOS) {
-      alert('Tap Share button (⎙) → Add to Home Screen');
-    } else {
-      addToBookmark();
-    }
-  } else {
-    addToBookmark();
-  }
-}
-
-function addToBookmark() {
-  if (window.sidebar && window.sidebar.addPanel) {
-    window.sidebar.addPanel(document.title, window.location.href, '');
-  } else if (window.external && ('AddFavorite' in window.external)) {
-    window.external.AddFavorite(window.location.href, document.title);
-  } else {
-    alert('Press ' + (navigator.userAgent.toLowerCase().indexOf('mac') != -1 ? 'Cmd' : 'Ctrl') + '+D to bookmark this page now!');
-  }
-}
 
 function showBanner(config) {  
   // Example: Auto-hide banner with emoji
@@ -429,12 +395,6 @@ function dismissBanner() {
   if (bannerTimeout) clearTimeout(bannerTimeout);
 }
 
-const countryToLang = {
-  CN: 'zh-cn', TW: 'zh-tw', HK: 'zh-hk', JP: 'ja', KR: 'ko',
-  DE: 'de', AT: 'de', CH: 'de', FR: 'fr', BE: 'fr', ES: 'es', MX: 'es',
-  PT: 'pt', BR: 'pt', RU: 'ru', IT: 'it', IN: 'hi',
-  MY: 'ms', BN: 'ms', SG: 'en', ID: 'id', VN: 'vi', TH: 'th', PH: 'en'
-};
 
 const allTranslationKeys = Object.keys(translations);
 const aseanLangs = allTranslationKeys.filter(k => ['ms', 'id', 'vi', 'th'].includes(k));
@@ -728,7 +688,7 @@ function storeAndOpenSave(dataUrl) {
   for (let i = 0; i < totalChunks; i++) {
     sessionStorage.setItem(`stitchedPhotoChunk_${i}`, dataUrl.slice(i * chunkSize, (i + 1) * chunkSize));
   }
-  window.open('save.html', '_blank');
+  window.open('save.html', '_blank', 'noopener');
 }
 
 async function saveResult() {
@@ -823,7 +783,7 @@ function showContributeTipsBanner() {
     title: 'Enjoying Photo Stitcher?',
     content: 'Support this free tool with a coffee tip to keep it running and ad-free!',
     buttonText: 'Buy Me a Coffee',
-    action: () => window.open('https://ko-fi.com/kopihao', '_blank'),
+    action: () => window.open('https://ko-fi.com/kopihao', '_blank', 'noopener,noreferrer'),
     dismissable: true,
     autoHideSeconds: 0
   });
