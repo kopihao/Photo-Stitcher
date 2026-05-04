@@ -1,5 +1,6 @@
-const CACHE_NAME='photo-stitcher-v1.0.3';
-const STATIC_FILES=['manifest.json','icon-192.png','icon-512.png'];
+importScripts('version.js');
+const CACHE_NAME='photo-stitcher-v'+APP_VERSION;
+const STATIC_FILES=['manifest.json','icon-192.png','icon-512.png','version.js'];
 const HTML_FILES=['index.html','photo-stitcher.html','save.html'];
 
 self.addEventListener('install',e=>{
