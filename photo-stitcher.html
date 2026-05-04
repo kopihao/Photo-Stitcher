@@ -38,6 +38,7 @@ h1 sup { font-size: 12px; color: #999; font-weight: normal; margin-left: 4px; }
 .btn:active { transform: scale(0.95); }
 .btn-primary { background: #007bff; color: white; box-shadow: 0 2px 5px rgba(0,123,255,0.3); }
 .btn-success { background: #28a745; color: white; box-shadow: 0 2px 5px rgba(40,167,69,0.3); }
+.btn:disabled { opacity: 0.6; pointer-events: none; }
 .btn-danger { background: #dc3545; color: white; box-shadow: 0 2px 5px rgba(220,53,69,0.3); }
 .lang-selector { 
   position: absolute;
@@ -284,7 +285,7 @@ body { padding-top: 60px; }
       <span data-i18n="upload">Upload Photo</span>
       <input type="file" accept="image/*" multiple onchange="addPhotos(event)">
     </label>
-    <button class="btn btn-success" onclick="saveResult()" data-i18n="save">
+    <button class="btn btn-success" id="saveBtn" onclick="saveResult()" data-i18n="save">
       <span></span>
       <span>Save Result</span>
     </button>
@@ -701,6 +702,13 @@ async function saveResult() {
     return;
   }
 
+  const saveBtn = document.getElementById('saveBtn');
+  const origText = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.textContent = '⏳ Stitching...';
+
+  await new Promise(r => setTimeout(r, 0));
+
   const preview = document.getElementById('preview');
   const previewWidth = preview.offsetWidth;
   const totalHeight = photos.reduce((sum, p) => sum + Math.round(p.height * previewWidth / p.width), 0);
@@ -760,6 +768,9 @@ async function saveResult() {
   }
 
   canvas.width = canvas.height = 0;
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = origText;
 
   let saveCount = parseInt(sessionStorage.getItem('saveCount') || '0');
   saveCount++;
