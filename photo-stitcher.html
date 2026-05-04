@@ -19,7 +19,7 @@ body {
   display: flex;
   flex-direction: column;
 }
-.container { width: 75vw; max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex: 1; display: flex; flex-direction: column; position: relative; }
+.container { width: 100%; max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex: 1; display: flex; flex-direction: column; position: relative; }
 h1 { font-size: 24px; margin-bottom: 20px; text-align: center; color: #1a1a1a; padding-left: 20px; padding-right: 20px; padding-top: 5px; font-weight: 600; letter-spacing: -0.3px; }
 h1 sup { font-size: 10px; color: #9e9e9e; font-weight: 400; margin-left: 2px; letter-spacing: 0.5px; vertical-align: super; }
 .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
@@ -48,78 +48,77 @@ h1 sup { font-size: 10px; color: #9e9e9e; font-weight: 400; margin-left: 2px; le
 .btn-danger:hover { background: #D32F2F; box-shadow: 0 4px 12px rgba(198,40,40,0.35); }
 .lang-selector { 
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 12px;
+  right: 12px;
   z-index: 100;
 }
 .lang-dropdown { 
   position: relative;
 }
 .lang-select-btn { 
-  padding: 6px;
-  border: none;
-  background: none;
+  padding: 0;
+  border: 1.5px solid #E0E0E0;
+  background: white;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 39px;
+  height: 39px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
+  border-radius: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.lang-select-btn svg { width: 18px; height: 18px; fill: #007bff; transform: rotate(180deg); transition: fill 0.3s; }
-.lang-select-btn:hover,
-.lang-select-btn.active { background: #48484a; }
-.lang-select-btn:hover svg,
-.lang-select-btn.active svg { fill: #fff; }
-.lang-select-btn:hover::after,
-.lang-select-btn.active::after {
-  content: '';
-  position: absolute;
-  width: 200%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: shimmer-sweep 1s infinite;
+.lang-select-btn svg { width: 17px; height: 17px; fill: #9E9E9E; transform: rotate(180deg); transition: all 0.2s; }
+.lang-select-btn:hover { border-color: #1565C0; box-shadow: 0 2px 8px rgba(21,101,192,0.15); animation: btn-shimmer 1.5s infinite; }
+.lang-select-btn:hover svg { fill: #1565C0; }
+@keyframes btn-shimmer {
+  0% { box-shadow: 0 2px 8px rgba(21,101,192,0.15); }
+  50% { box-shadow: 0 2px 14px rgba(21,101,192,0.35); }
+  100% { box-shadow: 0 2px 8px rgba(21,101,192,0.15); }
 }
-@keyframes shimmer-sweep {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
+.lang-select-btn.active { background: #1565C0; border-color: #1565C0; box-shadow: 0 2px 8px rgba(21,101,192,0.3); }
+.lang-select-btn.active svg { fill: #fff; transform: rotate(180deg) scale(0.85); }
 .lang-menu { 
   display: none;
   position: absolute;
-  top: 100%;
+  top: calc(100% + 6px);
   right: 0;
-  margin-top: 4px;
   background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
   z-index: 1000;
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
-  min-width: 140px;
+  min-width: 160px;
+  padding: 6px 0;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.96);
+  transition: opacity 0.2s, transform 0.2s;
 }
-.lang-menu.show { display: block; }
+.lang-menu.show { display: block; opacity: 1; transform: translateY(0) scale(1); }
+.lang-menu::-webkit-scrollbar { width: 4px; }
+.lang-menu::-webkit-scrollbar-track { background: transparent; }
+.lang-menu::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
 .lang-menu-item { 
-  padding: 8px 12px; 
+  padding: 9px 14px;
   cursor: pointer;
-  transition: background 0.2s;
-  border-bottom: 1px solid #f5f5f5;
+  transition: all 0.15s;
+  border-bottom: none;
   font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.1px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #333;
+  color: #424242;
+  border-radius: 6px;
+  margin: 0 6px;
 }
-.lang-menu-item:last-child { border-bottom: none; }
-.lang-menu-item:hover { background: #f8f9fa; }
-.lang-menu-item.active { background: #f0f0f0; color: #333; font-weight: 500; }
-.lang-menu-item.active::after { content: '✓'; margin-left: 8px; font-size: 11px; }
+.lang-menu-item:hover { background: #F5F5F5; color: #1a1a1a; }
+.lang-menu-item.active { background: #E3F2FD; color: #1565C0; font-weight: 500; }
+.lang-menu-item.active::after { content: ''; width: 6px; height: 6px; background: #1565C0; border-radius: 50%; margin-left: 8px; flex-shrink: 0; }
 footer { text-align: center; padding: 20px 20px 16px; color: #666; font-size: 12px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 300; }
 footer a { color: inherit; text-decoration: none; }
 footer div:last-child { margin-top: 6px; font-size: 11px; color: #9e9e9e; letter-spacing: 0.5px; }
@@ -271,10 +270,17 @@ body { padding-top: 60px; }
   h1 { font-size: 20px; padding-right: 40px; }
   .btn { padding: 10px 16px; font-size: 14px; }
   .controls { gap: 8px; }
+  .lang-select-btn { width: 46px; height: 46px; border-radius: 14px; }
+  .lang-select-btn svg { width: 20px; height: 20px; }
   .top-banner.show { flex-wrap: wrap; padding: 12px 14px; gap: 10px; }
   .top-banner-content { min-width: calc(100% - 90px); }
   .top-banner-btn { width: 100%; text-align: center; padding: 10px; font-size: 13px; order: 10; }
 }
+[dir="rtl"] .lang-selector { right: auto; left: 12px; }
+[dir="rtl"] .lang-menu { right: auto; left: 0; }
+[dir="rtl"] .photo-position { left: auto; right: 10px; }
+[dir="rtl"] .photo-controls { right: auto; left: 10px; }
+[dir="rtl"] h1 { direction: rtl; }
 </style>
 </head>
 <body>
@@ -294,12 +300,10 @@ body { padding-top: 60px; }
 
   <div class="controls shimmer">
     <label class="btn btn-primary">
-      <span></span>
       <span data-i18n="upload">Upload Photo</span>
       <input type="file" accept="image/*" multiple onchange="addPhotos(event)">
     </label>
     <button class="btn btn-success" id="saveBtn" onclick="saveResult()" data-i18n="save">
-      <span></span>
       <span>Save Result</span>
     </button>
   </div>
@@ -360,7 +364,7 @@ const translations = {
   nl: { lang: { code: 'nl', name: 'Nederlands' }, text: { title: 'Foto Samenvoegen', upload: 'Foto Uploaden', save: 'Resultaat Opslaan', empty: 'Klik op "Foto Uploaden" om te beginnen', position: 'van', alert: 'Voeg eerst foto\'s toe!' } }
 };
 
-let currentLang = 'en';
+let currentLang = localStorage.getItem('preferredLang') || 'en';
 let photos = [];
 let dropdownOpen = false;
 let langOrder = Object.keys(translations);
@@ -593,6 +597,10 @@ document.addEventListener('click', () => {
 
 function setLang(lang) {
   currentLang = lang;
+  localStorage.setItem('preferredLang', lang);
+  const isRTL = lang === 'ar';
+  document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+  document.documentElement.lang = lang;
   initLanguageSelector();
   
   const titleEl = document.querySelector('h1[data-i18n="title"]');
@@ -731,7 +739,7 @@ async function saveResult() {
   const saveBtn = document.getElementById('saveBtn');
   const origText = saveBtn.textContent;
   saveBtn.disabled = true;
-  saveBtn.textContent = '⏳ Stitching...';
+  const loadingTimer = setTimeout(() => { saveBtn.textContent = '⏳ Stitching...'; }, 150);
 
   await new Promise(r => setTimeout(r, 0));
 
@@ -800,6 +808,7 @@ async function saveResult() {
 
   canvas.width = canvas.height = 0;
 
+  clearTimeout(loadingTimer);
   saveBtn.disabled = false;
   saveBtn.textContent = origText;
 
