@@ -1,11 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="debug-mode" content="false">
+<meta name="description" content="Save your stitched photo — Photo Stitcher by kopihao.">
+<meta name="theme-color" content="#007bff">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="alternate icon" href="icon-192.png" type="image/png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Save Photo - Photo Stitcher</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,7 +29,7 @@ body {
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   margin-bottom: 20px;
   text-align: center;
-  width: 75vw;
+  width: 100%;
   max-width: 800px;
 }
 h1 { font-size: 20px; color: #333; margin-bottom: 8px; }
@@ -41,13 +45,15 @@ h1 { font-size: 20px; color: #333; margin-bottom: 8px; }
 .btn {
   margin-top: 15px;
   padding: 10px 20px;
-  background: #2563eb;
+  background: #1565C0;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
 }
+.btn:hover { background: #1976D2; }
 .icon { font-size: 24px; margin-bottom: 8px; }
 .icon.error { filter: grayscale(1) opacity(0.6); }
 img {
@@ -55,7 +61,7 @@ img {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   background: white;
-  width: 75vw;
+  width: 100%;
   max-width: 800px;
 }
 .debug {
@@ -66,7 +72,7 @@ img {
   margin: 10px 0;
   font-family: monospace;
   font-size: 12px;
-  width: 75vw;
+  width: 100%;
   max-width: 800px;
   max-height: 200px;
   overflow-y: auto;
@@ -145,6 +151,9 @@ footer {
   to { transform: translateY(-100%); }
 }
 body { padding-top: 60px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
 </style>
 </head>
 <body>
@@ -155,9 +164,9 @@ body { padding-top: 60px; }
     <div class="top-banner-title"></div>
     <div class="top-banner-text"></div>
   </div>
-  <button class="top-banner-btn" onclick="handleBannerAction()"></button>
+  <button class="top-banner-btn" onclick="handleBannerAction()" aria-label="Take action"></button>
 </div>
-<div class="header">
+<div class="header" role="banner">
   <div class="icon">🖼️</div>
   <h1>Your Stitched Photo</h1>
   <div class="instruction" id="instruction">
@@ -165,7 +174,7 @@ body { padding-top: 60px; }
     Then select <strong>"Save Image"</strong>
   </div>
 </div>
-<img id="result" alt="Stitched Photo" class="shimmer">
+<img id="result" alt="Stitched Photo" class="shimmer" role="img">
 <div id="debug" class="debug" style="display:none;"></div>
 <footer>© <span id="year"></span> kopihao</footer>
 <script>

@@ -3,6 +3,7 @@
   "short_name": "Photo Stitcher",
   "description": "Stitch photos together vertically",
   "start_url": "index.html",
+  "id": "/Photo-Stitcher/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#007bff",
