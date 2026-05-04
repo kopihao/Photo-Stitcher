@@ -329,7 +329,6 @@ const translations = {
   ru: { lang: { code: 'ru', name: 'Русский' }, text: { title: 'Сшиватель фото', upload: 'Загрузить фото', save: 'Сохранить результат', empty: 'Нажмите "Загрузить фото" для начала', position: 'из', alert: 'Сначала добавьте фотографии!' } },
   hi: { lang: { code: 'hi', name: 'हिंदी' }, text: { title: 'फोटो स्टिचर', upload: 'फोटो अपलोड करें', save: 'परिणाम सहेजें', empty: 'शुरू करने के लिए "फोटो अपलोड करें" पर क्लिक करें', position: 'का', alert: 'कृपया पहले फोटो जोड़ें!' } },
   it: { lang: { code: 'it', name: 'Italiano' }, text: { title: 'Unione Foto', upload: 'Carica Foto', save: 'Salva Risultato', empty: 'Fai clic su "Carica Foto" per iniziare', position: 'di', alert: 'Aggiungi prima le foto!' } },
-  de: { lang: { code: 'de', name: 'Deutsch' }, text: { title: 'Foto-Stitcher', upload: 'Foto hochladen', save: 'Ergebnis speichern', empty: 'Klicken Sie auf "Foto hochladen", um zu beginnen', position: 'von', alert: 'Bitte fügen Sie zuerst Fotos hinzu!' } },
   ms: { lang: { code: 'ms', name: 'Melayu' }, text: { title: 'Penyambung Foto', upload: 'Muat Naik Foto', save: 'Simpan Hasil', empty: 'Klik "Muat Naik Foto" untuk mula', position: 'daripada', alert: 'Sila tambah foto dahulu!' } },
   id: { lang: { code: 'id', name: 'Indonesia' }, text: { title: 'Penyambung Foto', upload: 'Unggah Foto', save: 'Simpan Hasil', empty: 'Klik "Unggah Foto" untuk mulai', position: 'dari', alert: 'Silakan tambahkan foto terlebih dahulu!' } },
   vi: { lang: { code: 'vi', name: 'Tiếng Việt' }, text: { title: 'Ghép Ảnh', upload: 'Tải Ảnh Lên', save: 'Lưu Kết Quả', empty: 'Nhấp "Tải Ảnh Lên" để bắt đầu', position: 'của', alert: 'Vui lòng thêm ảnh trước!' } },
@@ -449,15 +448,22 @@ async function detectAndOrderLanguages() {
   }
   
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch('https://api.country.is/', { signal: controller.signal });
-    clearTimeout(timeoutId);
-    const data = await res.json();
-    console.log('IP Geolocation Response:', data);
-    const country = data.country;
+    let country;
+    const cached = localStorage.getItem('geoCache');
+    if (cached) {
+      const { country: c, ts } = JSON.parse(cached);
+      if (Date.now() - ts < 86400000) country = c;
+    }
+    if (!country) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch('https://api.country.is/', { signal: controller.signal });
+      clearTimeout(timeoutId);
+      const data = await res.json();
+      country = data.country;
+      localStorage.setItem('geoCache', JSON.stringify({ country, ts: Date.now() }));
+    }
     detectedCountry = country;
-    console.log('Detected Country:', country);
     
     const allLangs = Object.keys(translations).filter(l => l !== 'en');
     const defaultList = allLangs.filter(l => !euLangs.includes(l) && !asiaLangs.includes(l) && !aseanLangs.includes(l));
@@ -629,8 +635,15 @@ function setLang(lang) {
   renderPhotos();
 }
 
+function getMaxWidth() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const previewWidth = document.getElementById('preview').offsetWidth || 800;
+  return Math.min(Math.round(previewWidth * dpr), 2048);
+}
+
 function addPhotos(event) {
   const files = Array.from(event.target.files);
+  const maxW = getMaxWidth();
   
   files.forEach(file => {
     if (file.type.startsWith('image/')) {
@@ -638,7 +651,22 @@ function addPhotos(event) {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          photos.push({ src: e.target.result, width: img.width, height: img.height });
+          let { width, height } = img;
+          let src = e.target.result;
+          if (width > maxW) {
+            const scale = maxW / width;
+            const c = document.createElement('canvas');
+            c.width = maxW;
+            c.height = Math.round(height * scale);
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            src = c.toDataURL('image/jpeg', 0.85);
+            width = c.width;
+            height = c.height;
+            c.width = c.height = 0;
+          }
+          img.onload = null;
+          img.src = '';
+          photos.push({ src, width, height });
           renderPhotos();
         };
         img.src = e.target.result;
@@ -690,6 +718,19 @@ function renderPhotos() {
   `).join('');
 }
 
+function storeAndOpenSave(dataUrl) {
+  const saveCount = sessionStorage.getItem('saveCount');
+  sessionStorage.clear();
+  if (saveCount) sessionStorage.setItem('saveCount', saveCount);
+  const chunkSize = 500000;
+  const totalChunks = Math.ceil(dataUrl.length / chunkSize);
+  sessionStorage.setItem('stitchedPhotoChunks', totalChunks.toString());
+  for (let i = 0; i < totalChunks; i++) {
+    sessionStorage.setItem(`stitchedPhotoChunk_${i}`, dataUrl.slice(i * chunkSize, (i + 1) * chunkSize));
+  }
+  window.open('save.html', '_blank');
+}
+
 async function saveResult() {
   if (photos.length === 0) {
     alert(translations[currentLang].text.alert);
@@ -715,54 +756,46 @@ async function saveResult() {
         const scaledHeight = Math.round(photo.height * previewWidth / photo.width);
         ctx.drawImage(img, 0, currentY, previewWidth, scaledHeight);
         currentY += scaledHeight;
+        img.onload = null;
+        img.src = '';
         resolve();
       };
     });
   }
 
-  const dataUrl = canvas.toDataURL('image/png');
-  
+  const filename = `kopihao-stitched-photo-${Date.now()}.png`;
+  let saved = false;
+
+  // Primary: blob download (no base64 overhead)
   try {
-    // throw new Error('Simulated download error'); // Remove this line to enable direct download in supported browsers
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = `kopihao-stitched-photo-${Date.now()}.png`;
-    a.click();
-  } catch {
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      saved = true;
+    }
+  } catch {}
+
+  // Fallback: sessionStorage chunked transfer
+  if (!saved) {
     try {
-      // Clear any existing chunks first
-      sessionStorage.clear();
-      //const chunkSize = 1000000; // 1MB chunks
-      const chunkSize = 500000; // 500KB chunks
-      const chunks = [];
-      for (let i = 0; i < dataUrl.length; i += chunkSize) {
-        chunks.push(dataUrl.slice(i, i + chunkSize));
-      }
-      sessionStorage.setItem('stitchedPhotoChunks', chunks.length.toString());
-      for (let i = 0; i < chunks.length; i++) {
-        sessionStorage.setItem(`stitchedPhotoChunk_${i}`, chunks[i]);
-      }
-      window.open('save.html', '_blank');
-    } catch (storageError) {
-      // Reduce image quality and try again
+      storeAndOpenSave(canvas.toDataURL('image/png'));
+      saved = true;
+    } catch {
       try {
-        sessionStorage.clear();
-        const reducedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        const chunkSize = 500000;
-        const chunks = [];
-        for (let i = 0; i < reducedDataUrl.length; i += chunkSize) {
-          chunks.push(reducedDataUrl.slice(i, i + chunkSize));
-        }
-        sessionStorage.setItem('stitchedPhotoChunks', chunks.length.toString());
-        for (let i = 0; i < chunks.length; i++) {
-          sessionStorage.setItem(`stitchedPhotoChunk_${i}`, chunks[i]);
-        }
-        window.open('save.html', '_blank');
+        storeAndOpenSave(canvas.toDataURL('image/jpeg', 0.7));
+        saved = true;
       } catch {
         alert('Image too large. Please try with fewer or smaller images.');
       }
     }
   }
+
+  canvas.width = canvas.height = 0;
 
   let saveCount = parseInt(sessionStorage.getItem('saveCount') || '0');
   saveCount++;
@@ -774,13 +807,11 @@ async function saveResult() {
     return true;
   };
   
-  const showBanner = (saveCount <= 10 && isPrime(saveCount)) || 
+  const shouldShowBanner = (saveCount <= 10 && isPrime(saveCount)) || 
                      (saveCount > 10 && saveCount <= 50 && saveCount % 5 === 0) || 
                      (saveCount > 50 && saveCount % 2 === 0);
   
-  console.log(`saveCount: ${saveCount}, show: ${showBanner}`);
-  
-  if (showBanner) {
+  if (shouldShowBanner) {
     showContributeTipsBanner();
   }
 
