@@ -162,6 +162,7 @@ footer div:last-child a:hover { color: #616161; }
 .preview.horizontal .photo-item { border-bottom: none; border-right: 2px dashed #ccc; flex-shrink: 0; }
 .preview.horizontal .photo-item:last-child { border-right: none; }
 .preview.horizontal .photo-item img { width: auto; height: 100%; max-height: 50vh; }
+.preview.horizontal::after { content: ''; position: sticky; right: 0; top: 0; bottom: 0; width: 24px; flex-shrink: 0; background: linear-gradient(to left, rgba(250,250,250,0.9), transparent); pointer-events: none; }
 .photo-controls { 
   position: absolute; 
   top: 10px; 
@@ -324,7 +325,7 @@ body { padding-top: 60px; }
       <span data-i18n="upload">Upload Photo</span>
       <input type="file" accept="image/*" multiple onchange="addPhotos(event)" aria-hidden="true">
     </label>
-    <button class="btn btn-outline" id="modeBtn" onclick="toggleMode()" aria-label="Toggle stitch direction" title="Vertical">
+    <button class="btn btn-outline" id="modeBtn" onclick="toggleMode()" aria-label="Toggle stitch direction" title="Vertical" style="display:none">
       <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><polyline points="6 16 12 22 18 16"/><polyline points="6 8 12 2 18 8"/></svg>
     </button>
     <button class="btn btn-success" id="saveBtn" onclick="saveResult()" data-i18n="save" aria-label="Save Result">
@@ -655,18 +656,30 @@ function getMaxWidth() {
   return Math.min(Math.round(previewWidth * dpr), 2048);
 }
 
+let addingPhotos = false;
 function addPhotos(event) {
   const files = Array.from(event.target.files);
+  event.target.value = '';
+  if (addingPhotos) return;
   const maxW = getMaxWidth();
-  let pending = files.filter(f => f.type.startsWith('image/')).length;
-  if (!pending) return;
+  const imageFiles = files.filter(f => f.type.startsWith('image/'));
+  if (!imageFiles.length) return;
+  addingPhotos = true;
   
-  files.forEach(file => {
-    if (!file.type.startsWith('image/')) return;
+  Promise.all(imageFiles.map(file => new Promise(resolve => {
     const blobUrl = URL.createObjectURL(file);
     const img = new Image();
+    img.onerror = () => {
+      URL.revokeObjectURL(blobUrl);
+      resolve(null);
+    };
     img.onload = () => {
       let { width, height } = img;
+      if (!width || !height) {
+        URL.revokeObjectURL(blobUrl);
+        resolve(null);
+        return;
+      }
       if (width > maxW) {
         const scale = maxW / width;
         const c = document.createElement('canvas');
@@ -678,23 +691,19 @@ function addPhotos(event) {
         c.toBlob(blob => {
           c.width = c.height = 0;
           URL.revokeObjectURL(blobUrl);
-          img.onload = null;
-          img.src = '';
-          photos.push({ blob, width, height, url: null });
-          if (--pending === 0) renderPhotos();
+          resolve(blob ? { blob, width, height, url: null } : null);
         }, 'image/jpeg', 0.85);
       } else {
-        img.onload = null;
-        img.src = '';
-        photos.push({ blob: file, width, height, url: null });
         URL.revokeObjectURL(blobUrl);
-        if (--pending === 0) renderPhotos();
+        resolve({ blob: file, width, height, url: null });
       }
     };
     img.src = blobUrl;
+  }))).then(results => {
+    results.forEach(r => { if (r) photos.push(r); });
+    addingPhotos = false;
+    renderPhotos();
   });
-  
-  event.target.value = '';
 }
 
 function toggleMode() {
@@ -781,14 +790,29 @@ async function saveResult() {
 
   const preview = document.getElementById('preview');
   const stitchWidth = getMaxWidth();
+  const validPhotos = photos.filter(p => p.width > 0 && p.height > 0);
+  if (validPhotos.length === 0) {
+    clearTimeout(loadingTimer);
+    saveBtn.disabled = false;
+    saveBtn.textContent = origText;
+    alert(translations[currentLang].text.alert);
+    return;
+  }
   let canvasW, canvasH;
   if (stitchMode === 'horizontal') {
     const stitchHeight = stitchWidth;
     canvasH = stitchHeight;
-    canvasW = photos.reduce((sum, p) => sum + Math.round(p.width * stitchHeight / p.height), 0);
+    canvasW = validPhotos.reduce((sum, p) => sum + Math.round(p.width * stitchHeight / p.height), 0);
   } else {
     canvasW = stitchWidth;
-    canvasH = photos.reduce((sum, p) => sum + Math.round(p.height * stitchWidth / p.width), 0);
+    canvasH = validPhotos.reduce((sum, p) => sum + Math.round(p.height * stitchWidth / p.width), 0);
+  }
+
+  const MAX_CANVAS = 16384;
+  if (canvasW > MAX_CANVAS || canvasH > MAX_CANVAS) {
+    const scale = MAX_CANVAS / Math.max(canvasW, canvasH);
+    canvasW = Math.round(canvasW * scale);
+    canvasH = Math.round(canvasH * scale);
   }
   
   const canvas = document.createElement('canvas');
@@ -798,7 +822,7 @@ async function saveResult() {
   
   let offset = 0;
   
-  for (const photo of photos) {
+  for (const photo of validPhotos) {
     let drawW, drawH, drawX, drawY;
     if (stitchMode === 'horizontal') {
       drawH = canvasH;
@@ -930,6 +954,10 @@ detectAndOrderLanguages().then(() => {
   document.querySelector('.preview').classList.remove('shimmer');
   initLanguageSelector();
   setLang(currentLang);
+});
+
+window.addEventListener('beforeunload', () => {
+  photos.forEach(p => { if (p.url) URL.revokeObjectURL(p.url); });
 });
 
 if('serviceWorker'in navigator){
