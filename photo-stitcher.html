@@ -126,6 +126,11 @@ h1 sup { font-size: 10px; color: #9e9e9e; font-weight: 400; margin-left: 2px; le
 .lang-menu-item:focus-visible { background: #E3F2FD; outline: none; }
 .lang-menu-item.active { background: #E3F2FD; color: #1565C0; font-weight: 500; }
 .lang-menu-item.active::after { content: ''; width: 6px; height: 6px; background: #1565C0; border-radius: 50%; margin-left: 8px; flex-shrink: 0; }
+.btn-outline { background: white; color: #1565C0; border: 1.5px solid #E0E0E0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 0; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.btn-outline:hover { border-color: #1565C0; background: #E3F2FD; }
+.btn-outline:focus-visible { outline: 2px solid #1565C0; outline-offset: 2px; }
+.btn-outline svg { width: 20px; height: 20px; fill: none; stroke: #1565C0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.3s; }
+.btn-outline.horizontal svg { transform: rotate(-90deg); }
 footer { text-align: center; padding: 20px 20px 16px; color: #666; font-size: 12px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 300; }
 footer a { color: inherit; text-decoration: none; }
 footer div:last-child { margin-top: 6px; font-size: 11px; color: #9e9e9e; letter-spacing: 0.5px; }
@@ -153,6 +158,10 @@ footer div:last-child a:hover { color: #616161; }
   width: 100%; 
   display: block;
 }
+.preview.horizontal { display: flex; flex-direction: row; overflow-x: auto; overflow-y: hidden; align-items: stretch; }
+.preview.horizontal .photo-item { border-bottom: none; border-right: 2px dashed #ccc; flex-shrink: 0; }
+.preview.horizontal .photo-item:last-child { border-right: none; }
+.preview.horizontal .photo-item img { width: auto; height: 100%; max-height: 50vh; }
 .photo-controls { 
   position: absolute; 
   top: 10px; 
@@ -315,6 +324,9 @@ body { padding-top: 60px; }
       <span data-i18n="upload">Upload Photo</span>
       <input type="file" accept="image/*" multiple onchange="addPhotos(event)" aria-hidden="true">
     </label>
+    <button class="btn btn-outline" id="modeBtn" onclick="toggleMode()" aria-label="Toggle stitch direction" title="Vertical">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><polyline points="6 16 12 22 18 16"/><polyline points="6 8 12 2 18 8"/></svg>
+    </button>
     <button class="btn btn-success" id="saveBtn" onclick="saveResult()" data-i18n="save" aria-label="Save Result">
       <span>Save Result</span>
     </button>
@@ -351,7 +363,7 @@ body { padding-top: 60px; }
   }
   
 const translations = {
-  en: { lang: { code: 'en', name: 'English' }, text: { title: 'Photo Stitcher', upload: 'Upload Photo', save: 'Save Result', empty: 'Click "Upload Photo" to start', position: 'of', alert: 'Please add photos first!' } },
+  en: { lang: { code: 'en', name: 'English' }, text: { title: 'Photo Stitcher', upload: 'Upload Photo', save: 'Save Result', vertical: 'Vertical', horizontal: 'Horizontal', empty: 'Click "Upload Photo" to start', position: 'of', alert: 'Please add photos first!' } },
   'zh-cn': { lang: { code: 'zh-cn', name: '简体中文' }, text: { title: '照片拼接器', upload: '上传照片', save: '保存结果', empty: '点击「上传照片」开始', position: '/', alert: '请先添加照片!' } },
   'zh-tw': { lang: { code: 'zh-tw', name: '繁體中文' }, text: { title: '照片拼接器', upload: '上傳照片', save: '儲存結果', empty: '點擊「上傳照片」開始', position: '/', alert: '請先新增照片!' } },
   'zh-hk': { lang: { code: 'zh-hk', name: '廣東話' }, text: { title: '相片拼接器', upload: '上載相片', save: '儲存結果', empty: '撳「上載相片」開始', position: '/', alert: '請先加相片!' } },
@@ -376,6 +388,7 @@ const translations = {
   nl: { lang: { code: 'nl', name: 'Nederlands' }, text: { title: 'Foto Samenvoegen', upload: 'Foto Uploaden', save: 'Resultaat Opslaan', empty: 'Klik op "Foto Uploaden" om te beginnen', position: 'van', alert: 'Voeg eerst foto\'s toe!' } }
 };
 
+let stitchMode = 'vertical';
 let currentLang = localStorage.getItem('preferredLang') || 'en';
 let photos = [];
 let dropdownOpen = false;
@@ -684,6 +697,14 @@ function addPhotos(event) {
   event.target.value = '';
 }
 
+function toggleMode() {
+  stitchMode = stitchMode === 'vertical' ? 'horizontal' : 'vertical';
+  const btn = document.getElementById('modeBtn');
+  btn.classList.toggle('horizontal', stitchMode === 'horizontal');
+  btn.title = stitchMode === 'horizontal' ? (translations[currentLang].text.horizontal || 'Horizontal') : (translations[currentLang].text.vertical || 'Vertical');
+  renderPhotos();
+}
+
 function removePhoto(index) {
   const removed = photos.splice(index, 1)[0];
   if (removed && removed.url) URL.revokeObjectURL(removed.url);
@@ -710,6 +731,9 @@ function renderPhotos() {
   }
   
   photos.forEach(p => { p.url = URL.createObjectURL(p.blob); });
+  
+  const isH = stitchMode === 'horizontal';
+  preview.classList.toggle('horizontal', isH);
   
   preview.innerHTML = photos.map((photo, index) => `
     <div class="photo-item">
@@ -757,32 +781,52 @@ async function saveResult() {
 
   const preview = document.getElementById('preview');
   const stitchWidth = getMaxWidth();
-  const totalHeight = photos.reduce((sum, p) => sum + Math.round(p.height * stitchWidth / p.width), 0);
+  let canvasW, canvasH;
+  if (stitchMode === 'horizontal') {
+    const stitchHeight = stitchWidth;
+    canvasH = stitchHeight;
+    canvasW = photos.reduce((sum, p) => sum + Math.round(p.width * stitchHeight / p.height), 0);
+  } else {
+    canvasW = stitchWidth;
+    canvasH = photos.reduce((sum, p) => sum + Math.round(p.height * stitchWidth / p.width), 0);
+  }
   
   const canvas = document.createElement('canvas');
-  canvas.width = stitchWidth;
-  canvas.height = totalHeight;
+  canvas.width = canvasW;
+  canvas.height = canvasH;
   const ctx = canvas.getContext('2d');
   
-  let currentY = 0;
+  let offset = 0;
   
   for (const photo of photos) {
-    const scaledHeight = Math.round(photo.height * stitchWidth / photo.width);
+    let drawW, drawH, drawX, drawY;
+    if (stitchMode === 'horizontal') {
+      drawH = canvasH;
+      drawW = Math.round(photo.width * canvasH / photo.height);
+      drawX = offset;
+      drawY = 0;
+      offset += drawW;
+    } else {
+      drawW = canvasW;
+      drawH = Math.round(photo.height * canvasW / photo.width);
+      drawX = 0;
+      drawY = offset;
+      offset += drawH;
+    }
     if (typeof createImageBitmap !== 'undefined') {
       const bmp = await createImageBitmap(photo.blob);
-      ctx.drawImage(bmp, 0, currentY, stitchWidth, scaledHeight);
+      ctx.drawImage(bmp, drawX, drawY, drawW, drawH);
       bmp.close();
     } else {
       const url = URL.createObjectURL(photo.blob);
       const img = new Image();
       img.src = url;
       await new Promise(resolve => { img.onload = resolve; });
-      ctx.drawImage(img, 0, currentY, stitchWidth, scaledHeight);
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
       img.onload = null;
       img.src = '';
       URL.revokeObjectURL(url);
     }
-    currentY += scaledHeight;
   }
 
   const filename = `kopihao-stitched-photo-${Date.now()}.png`;
