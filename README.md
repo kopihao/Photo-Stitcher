@@ -3,7 +3,7 @@
 > Combine multiple photos into one — without uploading a single byte.
 
 [![Live Demo](https://img.shields.io/badge/Try%20It-Live%20Demo-1565C0?style=for-the-badge)](https://kopihao.github.io/Photo-Stitcher/)
-[![Version](https://img.shields.io/badge/version-1.0.3-BBDEFB?style=for-the-badge)](https://github.com/kopihao/Photo-Stitcher/releases)
+[![Version](https://img.shields.io/badge/version-2.0.1-BBDEFB?style=for-the-badge)](https://github.com/kopihao/Photo-Stitcher/releases)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
 ---
@@ -28,6 +28,8 @@ Every other photo tool wants you to upload your images to a server. Photo Stitch
 ⚡ **Instant Results** — No waiting for uploads or server processing. Stitch photos in milliseconds.
 
 📴 **Works Offline** — Install as a PWA and use it anywhere — airplane, subway, no-signal zones.
+
+🎮 **D-Pad Controller** — Long-press any photo to activate. Reorder, toggle fill/fit, align edges, and delete — all from a draggable floating controller.
 
 🌍 **20+ Languages** — Auto-detects your region and prioritizes your language. Supports English, 中文, 日本語, 한국어, Español, Français, Deutsch, Português, Русский, हिंदी, العربية, and more.
 
@@ -61,6 +63,8 @@ This isn't marketing speak. It's architecturally enforced:
 
 **Verify it yourself:** Open DevTools → Network tab → upload photos → watch zero requests leave your device.
 
+> *Note: A single optional request to `api.country.is` detects your region for language ordering. No personal data is sent. This request is skipped when offline and fails gracefully.*
+
 Perfect for handling sensitive documents, medical records, legal files, or any photos you don't want in someone else's cloud.
 
 ---
@@ -84,6 +88,8 @@ Perfect for handling sensitive documents, medical records, legal files, or any p
 - **Device-aware processing** — adapts image resolution to screen DPR (max 2048px)
 - **createImageBitmap** — off-main-thread image decoding with fallback for older browsers
 - **Smart save pipeline** — Blob download → PNG sessionStorage → JPEG fallback → graceful error
+- **DOM-based deletion** — removes photo nodes in-place without re-rendering, preserving scroll position
+- **Draggable D-Pad** — pointer-event driven, viewport-constrained, with idle timeout and auto-dismiss
 - **Network-first SW** — always serves fresh HTML when online, cached version when offline
 - **Single source versioning** — `version.js` drives both SW cache and UI display
 
