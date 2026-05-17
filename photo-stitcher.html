@@ -970,6 +970,7 @@ function initLongPress() {
     item.addEventListener('touchstart', onTouchLongPressStart, { passive: true });
     item.addEventListener('touchend', onLongPressCancel);
     item.addEventListener('touchmove', onLongPressCancel);
+    item.addEventListener('contextmenu', e => e.preventDefault());
   });
 }
 
