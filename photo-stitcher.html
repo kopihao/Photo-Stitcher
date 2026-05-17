@@ -152,53 +152,198 @@ footer div:last-child a:hover { color: #616161; }
   position: relative; 
   border-bottom: 2px dashed #ccc;
   background: white;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .photo-item:last-child { border-bottom: none; }
 .photo-item img { 
-  width: 100%; 
   display: block;
 }
-.preview.horizontal { display: flex; flex-direction: row; overflow-x: auto; overflow-y: hidden; align-items: stretch; }
-.preview.horizontal .photo-item { border-bottom: none; border-right: 2px dashed #ccc; flex-shrink: 0; }
-.preview.horizontal .photo-item:last-child { border-right: none; }
-.preview.horizontal .photo-item img { width: auto; height: 100%; max-height: 50vh; }
-.preview.horizontal::after { content: ''; position: sticky; right: 0; top: 0; bottom: 0; width: 24px; flex-shrink: 0; background: linear-gradient(to left, rgba(250,250,250,0.9), transparent); pointer-events: none; }
-.photo-controls { 
-  position: absolute; 
-  top: 10px; 
-  right: 10px;
-  display: flex;
-  gap: 5px;
-}
-.photo-position { 
-  position: absolute; 
-  top: 10px; 
-  left: 10px;
+.photo-item img.fill { width: 100%; }
+.photo-item img.fit { max-width: 100%; }
+.photo-item.align-center { display: flex; justify-content: center; }
+.photo-item.align-left { display: flex; justify-content: flex-start; }
+.photo-item.align-right { display: flex; justify-content: flex-end; }
+.preview.horizontal .photo-item img.fill { width: auto; height: 50vh; }
+.preview.horizontal .photo-item img.fit { width: auto; max-height: 50vh; }
+.preview.horizontal .photo-item.align-center { display: flex; align-items: center; justify-content: center; }
+.preview.horizontal .photo-item.align-top { display: flex; align-items: flex-start; }
+.preview.horizontal .photo-item.align-bottom { display: flex; align-items: flex-end; }
+.dpad-overlay {
+  position: absolute;
+  inset: 0;
   background: rgba(0,0,0,0.7);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  z-index: 50;
+  pointer-events: none;
+  animation: dpadFadeIn 0.2s ease-out;
 }
-.icon-btn { 
-  width: 48px; 
-  height: 48px; 
-  border: none; 
-  border-radius: 50%; 
-  background: rgba(0,0,0,0.5);
-  color: white;
+.dpad-active {
+  overflow: hidden;
+}
+.dpad-active .dpad-overlay {
+  background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(21,101,192,0.3) 50%, rgba(0,0,0,0.7) 100%);
+  background-size: 300% 300%;
+  animation: dpadFadeIn 0.2s ease-out, dpadRipple 0.6s ease-out forwards, dpadScanline 3s 0.6s infinite linear;
+}
+.dpad-active .dpad-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(21,101,192,0.03) 2px,
+    rgba(21,101,192,0.03) 4px
+  );
+  animation: dpadScanMove 4s linear infinite;
+}
+.dpad-active .dpad-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(21,101,192,0.4);
+  border-radius: 2px;
+  animation: dpadBorderPulse 2s 0.6s ease-in-out infinite;
+}
+@keyframes dpadRipple {
+  0% { box-shadow: inset 0 0 0 0 rgba(21,101,192,0.8); }
+  100% { box-shadow: inset 0 0 0 6px rgba(21,101,192,0); }
+}
+@keyframes dpadScanline {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+@keyframes dpadScanMove {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+@keyframes dpadBorderPulse {
+  0%, 100% { opacity: 0.4; border-color: rgba(21,101,192,0.4); }
+  50% { opacity: 1; border-color: rgba(21,101,192,0.8); }
+}
+@keyframes dpadFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.dpad-fixed {
+  position: fixed;
+  bottom: 40px;
+  left: 24px;
+  z-index: 1000;
+  animation: dpadFadeIn 0.2s ease-out;
+  cursor: grab;
+}
+.dpad {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  background: rgba(10,20,40,0.55);
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  border: 1.5px solid rgba(21,101,192,0.2);
+}
+@media (max-width: 600px) {
+  .dpad { width: 200px; height: 200px; }
+  .dpad-fixed { bottom: 32px; left: 16px; }
+}
+.dpad-btn {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(21,101,192,0.95);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  transition: all 0.2s;
-  backdrop-filter: blur(4px);
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  border: 1.5px solid rgba(255,255,255,0.4);
 }
-.icon-btn svg { width: 24px; height: 24px; }
-.icon-btn:hover { background: rgba(220,53,69,0.8); transform: scale(1.05); }
-.icon-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.icon-btn:active { transform: scale(0.95); }
+.dpad-btn svg { width: 22px; height: 22px; }
+.dpad-btn:hover { background: rgba(21,101,192,1); }
+.dpad-btn:active { transform: scale(0.9); background: rgba(21,101,192,1); }
+.dpad-btn.disabled { opacity: 0.2; pointer-events: none; }
+.dpad-btn.up { top: 8px; left: 50%; transform: translateX(-50%); }
+.dpad-btn.down { bottom: 8px; left: 50%; transform: translateX(-50%); }
+.dpad-btn.left { left: 8px; top: 50%; transform: translateY(-50%); }
+.dpad-btn.right { right: 8px; top: 50%; transform: translateY(-50%); }
+.dpad-btn.center { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 12px; }
+.dpad-btn.up:active, .dpad-btn.down:active { transform: translateX(-50%) scale(0.9); }
+.dpad-btn.left:active, .dpad-btn.right:active { transform: translateY(-50%) scale(0.9); }
+.dpad-btn.center:active { transform: translate(-50%, -50%) scale(0.9); }
+.dpad-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: dpadGlow 2s ease-in-out infinite;
+}
+@keyframes dpadGlow {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(21,101,192,0.4), inset 0 0 10px 2px rgba(21,101,192,0.15); }
+  50% { box-shadow: 0 0 20px 5px rgba(21,101,192,0.7), inset 0 0 15px 4px rgba(21,101,192,0.3); }
+}
+.dpad-position {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #1565C0;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: none;
+}
+.dpad-info-panel {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(10,40,80,0.96);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(21,101,192,0.5);
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08);
+  white-space: nowrap;
+  animation: dpadFadeIn 0.2s ease-out;
+}
+.dpad-info-position {
+  color: rgba(255,255,255,0.95);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.dpad-info-delete {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(198,40,40,0.95);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 2px 6px rgba(198,40,40,0.5);
+  border: 1.5px solid rgba(255,255,255,0.3);
+}
+.dpad-info-delete svg { width: 18px; height: 18px; }
+.dpad-info-delete:hover { background: rgba(211,47,47,1); transform: scale(1.1); }
+.dpad-info-delete:active { transform: scale(0.9); }
+
+.preview.horizontal { display: flex; flex-direction: row; overflow-x: auto; overflow-y: hidden; align-items: stretch; }
+.preview.horizontal .photo-item { border-bottom: none; border-right: 2px dashed #ccc; flex-shrink: 0; }
+.preview.horizontal .photo-item:last-child { border-right: none; }
+.preview.horizontal .photo-item img { max-height: 50vh; }
+.preview.horizontal::after { content: ''; position: sticky; right: 0; top: 0; bottom: 0; width: 24px; flex-shrink: 0; background: linear-gradient(to left, rgba(250,250,250,0.9), transparent); pointer-events: none; }
+
 .empty-state { 
   text-align: center; 
   padding: 60px 20px; 
@@ -297,8 +442,7 @@ body { padding-top: 60px; }
 }
 [dir="rtl"] .lang-selector { right: auto; left: 12px; }
 [dir="rtl"] .lang-menu { right: auto; left: 0; }
-[dir="rtl"] .photo-position { left: auto; right: 10px; }
-[dir="rtl"] .photo-controls { right: auto; left: 10px; }
+
 [dir="rtl"] h1 { direction: rtl; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -325,7 +469,7 @@ body { padding-top: 60px; }
       <span data-i18n="upload">Upload Photo</span>
       <input type="file" accept="image/*" multiple onchange="addPhotos(event)" aria-hidden="true">
     </label>
-    <button class="btn btn-outline" id="modeBtn" onclick="toggleMode()" aria-label="Toggle stitch direction" title="Vertical" style="display:none">
+    <button class="btn btn-outline" id="modeBtn" onclick="toggleMode()" aria-label="Toggle stitch direction" title="Vertical">
       <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><polyline points="6 16 12 22 18 16"/><polyline points="6 8 12 2 18 8"/></svg>
     </button>
     <button class="btn btn-success" id="saveBtn" onclick="saveResult()" data-i18n="save" aria-label="Save Result">
@@ -656,12 +800,12 @@ function getMaxWidth() {
   return Math.min(Math.round(previewWidth * dpr), 2048);
 }
 
+const MAX_DIMENSION = 16384;
 let addingPhotos = false;
 function addPhotos(event) {
   const files = Array.from(event.target.files);
   event.target.value = '';
   if (addingPhotos) return;
-  const maxW = getMaxWidth();
   const imageFiles = files.filter(f => f.type.startsWith('image/'));
   if (!imageFiles.length) return;
   addingPhotos = true;
@@ -680,10 +824,10 @@ function addPhotos(event) {
         resolve(null);
         return;
       }
-      if (width > maxW) {
-        const scale = maxW / width;
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const scale = MAX_DIMENSION / Math.max(width, height);
         const c = document.createElement('canvas');
-        c.width = maxW;
+        c.width = Math.round(width * scale);
         c.height = Math.round(height * scale);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         width = c.width;
@@ -700,7 +844,7 @@ function addPhotos(event) {
     };
     img.src = blobUrl;
   }))).then(results => {
-    results.forEach(r => { if (r) photos.push(r); });
+    results.forEach(r => { if (r) { r.align = 'center'; r.fill = true; photos.push(r); } });
     addingPhotos = false;
     renderPhotos();
   });
@@ -711,13 +855,36 @@ function toggleMode() {
   const btn = document.getElementById('modeBtn');
   btn.classList.toggle('horizontal', stitchMode === 'horizontal');
   btn.title = stitchMode === 'horizontal' ? (translations[currentLang].text.horizontal || 'Horizontal') : (translations[currentLang].text.vertical || 'Vertical');
+  photos.forEach(p => { p.fill = true; p.align = 'center'; });
   renderPhotos();
 }
 
 function removePhoto(index) {
+  const preview = document.getElementById('preview');
   const removed = photos.splice(index, 1)[0];
   if (removed && removed.url) URL.revokeObjectURL(removed.url);
-  renderPhotos();
+
+  if (photos.length === 0) {
+    renderPhotos();
+    return;
+  }
+
+  // Remove DOM node directly to avoid full re-render flash
+  const items = preview.querySelectorAll('.photo-item');
+  const removedEl = items[index];
+  if (removedEl) {
+    const img = removedEl.querySelector('img');
+    if (img && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+    removedEl.remove();
+  }
+
+  // Update remaining items' indices, positions, and handlers
+  const remaining = preview.querySelectorAll('.photo-item');
+  remaining.forEach((item, i) => {
+    item.dataset.index = i;
+  });
+
+  initLongPress();
 }
 
 function renderPhotos() {
@@ -726,6 +893,7 @@ function renderPhotos() {
   photos.forEach(p => { if (p.url) { URL.revokeObjectURL(p.url); p.url = null; } });
 
   if (photos.length === 0) {
+    preview.classList.remove('horizontal');
     preview.innerHTML = `
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -744,22 +912,353 @@ function renderPhotos() {
   const isH = stitchMode === 'horizontal';
   preview.classList.toggle('horizontal', isH);
   
-  preview.innerHTML = photos.map((photo, index) => `
-    <div class="photo-item">
-      <div class="photo-position">${index + 1} ${translations[currentLang].text.position} ${photos.length}</div>
-      <div class="photo-controls">
-        <button class="icon-btn" onclick="removePhoto(${index})" title="Remove" aria-label="Remove photo ${index + 1}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            <line x1="10" y1="11" x2="10" y2="17"/>
-            <line x1="14" y1="11" x2="14" y2="17"/>
-          </svg>
-        </button>
-      </div>
-      <img src="${photo.url}" alt="Photo ${index + 1}">
+  preview.innerHTML = photos.map((photo, index) => {
+    const fillClass = photo.fill ? 'fill' : 'fit';
+    const alignClass = photo.fill ? 'align-center' : `align-${photo.align || 'center'}`;
+    return `
+    <div class="photo-item ${alignClass}" data-index="${index}">
+      <img class="${fillClass}" src="${photo.url}" alt="Photo ${index + 1}">
     </div>
-  `).join('');
+  `;
+  }).join('');
+  
+  initLongPress();
+}
+
+function updatePreview() {
+  const preview = document.getElementById('preview');
+  const items = preview.querySelectorAll('.photo-item');
+  items.forEach((item, index) => {
+    const photo = photos[index];
+    if (!photo) return;
+    item.dataset.index = index;
+    const isActive = item.classList.contains('dpad-active');
+    item.className = `photo-item ${photo.fill ? 'align-center' : 'align-' + (photo.align || 'center')}${isActive ? ' dpad-active' : ''}`;
+    const img = item.querySelector('img');
+    img.className = photo.fill ? 'fill' : 'fit';
+  });
+}
+
+function swapPhotosInDom(fromIdx, toIdx) {
+  const preview = document.getElementById('preview');
+  const items = preview.querySelectorAll('.photo-item');
+  const fromEl = items[fromIdx];
+  const toEl = items[toIdx];
+  if (!fromEl || !toEl) return;
+  if (fromIdx < toIdx) {
+    preview.insertBefore(fromEl, toEl.nextSibling);
+  } else {
+    preview.insertBefore(fromEl, toEl);
+  }
+  updatePreview();
+  initLongPress();
+}
+
+// D-Pad Controller
+let dpadState = null;
+let dpadIdleTimer = null;
+let longPressTimer = null;
+
+function initLongPress() {
+  const items = document.querySelectorAll('.photo-item');
+  items.forEach(item => {
+    if (item._lpBound) return;
+    item._lpBound = true;
+    item.addEventListener('mousedown', onLongPressStart);
+    item.addEventListener('mouseup', onLongPressCancel);
+    item.addEventListener('mouseleave', onLongPressCancel);
+    item.addEventListener('touchstart', onTouchLongPressStart, { passive: true });
+    item.addEventListener('touchend', onLongPressCancel);
+    item.addEventListener('touchmove', onLongPressCancel);
+  });
+}
+
+function onLongPressStart(e) {
+  if (e.target.closest('.dpad-overlay')) return;
+  const item = e.currentTarget;
+  longPressTimer = setTimeout(() => showDpad(parseInt(item.dataset.index)), 400);
+}
+
+function onTouchLongPressStart(e) {
+  if (e.target.closest('.dpad-overlay')) return;
+  const item = e.currentTarget;
+  longPressTimer = setTimeout(() => {
+    showDpad(parseInt(item.dataset.index));
+    if (navigator.vibrate) navigator.vibrate(20);
+  }, 400);
+}
+
+function onLongPressCancel() {
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+}
+
+function showDpad(index) {
+  dismissDpad();
+  dpadState = { index };
+  const item = document.querySelector(`.photo-item[data-index="${index}"]`);
+  if (!item) return;
+  
+  const photo = photos[index];
+  const isH = stitchMode === 'horizontal';
+  const isFill = photo.fill || false;
+  const isFirst = index === 0;
+  const isLast = index === photos.length - 1;
+  
+  const hideAlign = isFill;
+  
+  const upDisabled = isH ? (hideAlign || photo.align === 'top') : isFirst;
+  const downDisabled = isH ? (hideAlign || photo.align === 'bottom') : isLast;
+  const leftDisabled = isH ? isFirst : (hideAlign || photo.align === 'left');
+  const rightDisabled = isH ? isLast : (hideAlign || photo.align === 'right');
+
+  const svgUp = '<svg viewBox="0 0 24 24" fill="white"><polygon points="12,4 4,16 20,16"/></svg>';
+  const svgDown = '<svg viewBox="0 0 24 24" fill="white"><polygon points="12,20 4,8 20,8"/></svg>';
+  const svgLeft = '<svg viewBox="0 0 24 24" fill="white"><polygon points="4,12 16,4 16,20"/></svg>';
+  const svgRight = '<svg viewBox="0 0 24 24" fill="white"><polygon points="20,12 8,4 8,20"/></svg>';
+  const svgFill = '<svg viewBox="0 0 24 24" fill="white"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>';
+  const svgFit = '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1" fill="white"/></svg>';
+
+  // Shimmer on active photo
+  item.classList.add('dpad-active');
+  
+  // Overlay on image
+  const overlay = document.createElement('div');
+  overlay.className = 'dpad-overlay';
+  item.appendChild(overlay);
+
+  // Fixed D-pad at bottom-left of viewport
+  const dpadEl = document.createElement('div');
+  dpadEl.className = 'dpad-fixed';
+  dpadEl.id = 'dpadController';
+  const svgDelete = '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+  dpadEl.innerHTML = `
+    <div class="dpad-info-panel">
+      <span class="dpad-info-position">${index + 1} / ${photos.length}</span>
+      <button class="dpad-info-delete" onclick="dpadDelete()" aria-label="Delete photo">${svgDelete}</button>
+    </div>
+    <div class="dpad">
+      <div class="dpad-glow"></div>
+      <button class="dpad-btn up ${upDisabled ? 'disabled' : ''}" onclick="dpadAction('up')">${svgUp}</button>
+      <button class="dpad-btn down ${downDisabled ? 'disabled' : ''}" onclick="dpadAction('down')">${svgDown}</button>
+      <button class="dpad-btn left ${leftDisabled ? 'disabled' : ''}" onclick="dpadAction('left')">${svgLeft}</button>
+      <button class="dpad-btn right ${rightDisabled ? 'disabled' : ''}" onclick="dpadAction('right')">${svgRight}</button>
+      <button class="dpad-btn center" onclick="dpadAction('center')">${isFill ? svgFit : svgFill}</button>
+      <div class="dpad-position">${index + 1} / ${photos.length}</div>
+    </div>
+  `;
+  dpadEl.addEventListener('click', e => e.stopPropagation());
+
+  // Draggable dpad
+  let dragOffsetX = 0, dragOffsetY = 0, isDragging = false;
+  const onDragStart = (startX, startY) => {
+    const rect = dpadEl.getBoundingClientRect();
+    dragOffsetX = startX - rect.left;
+    dragOffsetY = startY - rect.top;
+    isDragging = true;
+    dpadEl.style.cursor = 'grabbing';
+    dpadEl.style.transition = 'none';
+    if (dpadIdleTimer) { clearTimeout(dpadIdleTimer); dpadIdleTimer = null; }
+  };
+  const onDragMove = (clientX, clientY) => {
+    if (!isDragging) return;
+    const x = Math.max(0, Math.min(clientX - dragOffsetX, window.innerWidth - dpadEl.offsetWidth));
+    const y = Math.max(0, Math.min(clientY - dragOffsetY, window.innerHeight - dpadEl.offsetHeight));
+    dpadEl.style.left = x + 'px';
+    dpadEl.style.top = y + 'px';
+    dpadEl.style.bottom = 'auto';
+    dpadEl.style.right = 'auto';
+  };
+  const onDragEnd = () => {
+    isDragging = false;
+    dpadEl.style.cursor = 'grab';
+    dpadEl.style.transition = '';
+    resetDpadIdle();
+  };
+  dpadEl.addEventListener('mousedown', e => {
+    if (e.target.closest('.dpad-btn') || e.target.closest('.dpad-info-delete')) return;
+    onDragStart(e.clientX, e.clientY);
+  });
+  document.addEventListener('mousemove', e => onDragMove(e.clientX, e.clientY));
+  document.addEventListener('mouseup', onDragEnd);
+  dpadEl.addEventListener('touchstart', e => {
+    if (e.target.closest('.dpad-btn') || e.target.closest('.dpad-info-delete')) return;
+    const t = e.touches[0];
+    onDragStart(t.clientX, t.clientY);
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    const t = e.touches[0];
+    onDragMove(t.clientX, t.clientY);
+  }, { passive: false });
+  document.addEventListener('touchend', onDragEnd);
+
+  document.body.appendChild(dpadEl);
+  
+  // Dismiss on tap outside dpad
+  setTimeout(() => document.addEventListener('pointerdown', dpadOutsideClick), 300);
+  
+  // Scroll if active photo is out of viewport
+  setTimeout(() => {
+    const el = document.querySelector(`.photo-item[data-index="${index}"]`);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < 0 || rect.bottom > window.innerHeight) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, 50);
+  resetDpadIdle();
+}
+
+function dpadOutsideClick(e) {
+  if (e.target.closest('#dpadController')) return;
+  if (e.target.closest('.dpad-active')) return;
+  dismissDpad();
+}
+
+function dpadAction(dir) {
+  if (!dpadState) return;
+  const idx = dpadState.index;
+  const photo = photos[idx];
+  const isH = stitchMode === 'horizontal';
+
+  if (dir === 'center') {
+    if (!photo.fill && photo.align !== 'center') {
+      photo.align = 'center';
+    } else {
+      photo.fill = !photo.fill;
+      if (photo.fill) photo.align = 'center';
+    }
+    updatePreview(); updateDpadState();
+    resetDpadIdle();
+    return;
+  }
+
+  if (isH) {
+    if (dir === 'left' && idx > 0) {
+      [photos[idx], photos[idx - 1]] = [photos[idx - 1], photos[idx]];
+      dpadState.index = idx - 1;
+      swapPhotosInDom(idx, idx - 1);
+      updateDpadState();
+    } else if (dir === 'right' && idx < photos.length - 1) {
+      [photos[idx], photos[idx + 1]] = [photos[idx + 1], photos[idx]];
+      dpadState.index = idx + 1;
+      swapPhotosInDom(idx, idx + 1);
+      updateDpadState();
+    } else if (dir === 'up') {
+      if (photo.align === 'top') return;
+      photo.align = photo.align === 'top' ? 'center' : 'top';
+      updatePreview(); updateDpadState();
+    } else if (dir === 'down') {
+      if (photo.align === 'bottom') return;
+      photo.align = photo.align === 'bottom' ? 'center' : 'bottom';
+      updatePreview(); updateDpadState();
+    }
+  } else {
+    if (dir === 'up' && idx > 0) {
+      [photos[idx], photos[idx - 1]] = [photos[idx - 1], photos[idx]];
+      dpadState.index = idx - 1;
+      swapPhotosInDom(idx, idx - 1);
+      updateDpadState();
+    } else if (dir === 'down' && idx < photos.length - 1) {
+      [photos[idx], photos[idx + 1]] = [photos[idx + 1], photos[idx]];
+      dpadState.index = idx + 1;
+      swapPhotosInDom(idx, idx + 1);
+      updateDpadState();
+    } else if (dir === 'left') {
+      if (photo.align === 'left') return;
+      photo.align = photo.align === 'left' ? 'center' : 'left';
+      updatePreview(); updateDpadState();
+    } else if (dir === 'right') {
+      if (photo.align === 'right') return;
+      photo.align = photo.align === 'right' ? 'center' : 'right';
+      updatePreview(); updateDpadState();
+    }
+  }
+  resetDpadIdle();
+}
+
+function updateDpadState() {
+  if (!dpadState) return;
+  const idx = dpadState.index;
+  const photo = photos[idx];
+  const isH = stitchMode === 'horizontal';
+  const isFill = photo.fill || false;
+  const isFirst = idx === 0;
+  const isLast = idx === photos.length - 1;
+  const hideAlign = isFill;
+
+  const dpadEl = document.getElementById('dpadController');
+  if (!dpadEl) return;
+
+  const upBtn = dpadEl.querySelector('.dpad-btn.up');
+  const downBtn = dpadEl.querySelector('.dpad-btn.down');
+  const leftBtn = dpadEl.querySelector('.dpad-btn.left');
+  const rightBtn = dpadEl.querySelector('.dpad-btn.right');
+  const centerBtn = dpadEl.querySelector('.dpad-btn.center');
+  const posEl = dpadEl.querySelector('.dpad-position');
+
+  const upDisabled = isH ? (hideAlign || photo.align === 'top') : isFirst;
+  const downDisabled = isH ? (hideAlign || photo.align === 'bottom') : isLast;
+  const leftDisabled = isH ? isFirst : (hideAlign || photo.align === 'left');
+  const rightDisabled = isH ? isLast : (hideAlign || photo.align === 'right');
+
+  upBtn.classList.toggle('disabled', upDisabled);
+  downBtn.classList.toggle('disabled', downDisabled);
+  leftBtn.classList.toggle('disabled', leftDisabled);
+  rightBtn.classList.toggle('disabled', rightDisabled);
+
+  const svgFill = '<svg viewBox="0 0 24 24" fill="white"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>';
+  const svgFit = '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1" fill="white"/></svg>';
+  centerBtn.innerHTML = isFill ? svgFit : svgFill;
+  posEl.textContent = `${idx + 1} / ${photos.length}`;
+
+  const infoPos = dpadEl.querySelector('.dpad-info-position');
+  if (infoPos) infoPos.textContent = `${idx + 1} / ${photos.length}`;
+
+  // Update overlay on correct photo
+  const oldOverlay = document.querySelector('.dpad-overlay');
+  if (oldOverlay) oldOverlay.remove();
+  const oldActive = document.querySelector('.dpad-active');
+  if (oldActive) oldActive.classList.remove('dpad-active');
+
+  const item = document.querySelector(`.photo-item[data-index="${idx}"]`);
+  if (item) {
+    item.classList.add('dpad-active');
+    const overlay = document.createElement('div');
+    overlay.className = 'dpad-overlay';
+    item.appendChild(overlay);
+    // Scroll if out of viewport
+    setTimeout(() => {
+      const rect = item.getBoundingClientRect();
+      if (rect.top < 0 || rect.bottom > window.innerHeight) {
+        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 50);
+  }
+}
+
+function resetDpadIdle() {
+  if (dpadIdleTimer) clearTimeout(dpadIdleTimer);
+  dpadIdleTimer = setTimeout(dismissDpad, 5000);
+}
+
+function dpadDelete() {
+  if (!dpadState) return;
+  const idx = dpadState.index;
+  dismissDpad();
+  removePhoto(idx);
+}
+
+function dismissDpad() {
+  if (dpadIdleTimer) { clearTimeout(dpadIdleTimer); dpadIdleTimer = null; }
+  document.removeEventListener('pointerdown', dpadOutsideClick);
+  const overlay = document.querySelector('.dpad-overlay');
+  if (overlay) overlay.remove();
+  const dpadEl = document.getElementById('dpadController');
+  if (dpadEl) dpadEl.remove();
+  const activeItem = document.querySelector('.dpad-active');
+  if (activeItem) activeItem.classList.remove('dpad-active');
+  dpadState = null;
 }
 
 function storeAndOpenSave(dataUrl) {
@@ -802,10 +1301,16 @@ async function saveResult() {
   if (stitchMode === 'horizontal') {
     const stitchHeight = stitchWidth;
     canvasH = stitchHeight;
-    canvasW = validPhotos.reduce((sum, p) => sum + Math.round(p.width * stitchHeight / p.height), 0);
+    canvasW = validPhotos.reduce((sum, p) => {
+      if (p.fill) return sum + Math.round(p.width * stitchHeight / p.height);
+      return sum + (p.height > stitchHeight ? Math.round(p.width * stitchHeight / p.height) : p.width);
+    }, 0);
   } else {
     canvasW = stitchWidth;
-    canvasH = validPhotos.reduce((sum, p) => sum + Math.round(p.height * stitchWidth / p.width), 0);
+    canvasH = validPhotos.reduce((sum, p) => {
+      if (p.fill) return sum + Math.round(p.height * stitchWidth / p.width);
+      return sum + (p.width > stitchWidth ? Math.round(p.height * stitchWidth / p.width) : p.height);
+    }, 0);
   }
 
   const MAX_CANVAS = 16384;
@@ -824,18 +1329,53 @@ async function saveResult() {
   
   for (const photo of validPhotos) {
     let drawW, drawH, drawX, drawY;
-    if (stitchMode === 'horizontal') {
-      drawH = canvasH;
-      drawW = Math.round(photo.width * canvasH / photo.height);
-      drawX = offset;
-      drawY = 0;
-      offset += drawW;
+    
+    if (photo.fill) {
+      // Fill: scale to stitch dimension edge-to-edge
+      if (stitchMode === 'horizontal') {
+        drawH = canvasH;
+        drawW = Math.round(photo.width * canvasH / photo.height);
+      } else {
+        drawW = canvasW;
+        drawH = Math.round(photo.height * canvasW / photo.width);
+      }
     } else {
-      drawW = canvasW;
-      drawH = Math.round(photo.height * canvasW / photo.width);
-      drawX = 0;
+      // Fit: natural size, scale down only if exceeds stitch dimension
+      if (stitchMode === 'horizontal') {
+        if (photo.height > canvasH) {
+          drawH = canvasH;
+          drawW = Math.round(photo.width * canvasH / photo.height);
+        } else {
+          drawW = photo.width;
+          drawH = photo.height;
+        }
+      } else {
+        if (photo.width > canvasW) {
+          drawW = canvasW;
+          drawH = Math.round(photo.height * canvasW / photo.width);
+        } else {
+          drawW = photo.width;
+          drawH = photo.height;
+        }
+      }
+    }
+    
+    // Slot = actual space this photo occupies in the stitch
+    const slotW = drawW;
+    const slotH = drawH;
+    
+    if (stitchMode === 'horizontal') {
+      drawX = offset;
+      if (photo.fill || photo.align === 'center') drawY = Math.round((canvasH - drawH) / 2);
+      else if (photo.align === 'top') drawY = 0;
+      else drawY = canvasH - drawH;
+      offset += slotW;
+    } else {
       drawY = offset;
-      offset += drawH;
+      if (photo.fill || photo.align === 'center') drawX = Math.round((canvasW - drawW) / 2);
+      else if (photo.align === 'left') drawX = 0;
+      else drawX = canvasW - drawW;
+      offset += slotH;
     }
     if (typeof createImageBitmap !== 'undefined') {
       const bmp = await createImageBitmap(photo.blob);
