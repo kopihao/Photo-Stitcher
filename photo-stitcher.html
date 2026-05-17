@@ -1300,7 +1300,8 @@ async function saveResult() {
   }
   let canvasW, canvasH;
   if (stitchMode === 'horizontal') {
-    const stitchHeight = stitchWidth;
+    const maxNaturalH = Math.max(...validPhotos.map(p => p.height));
+    const stitchHeight = Math.min(maxNaturalH, stitchWidth);
     canvasH = stitchHeight;
     canvasW = validPhotos.reduce((sum, p) => {
       if (p.fill) return sum + Math.round(p.width * stitchHeight / p.height);
